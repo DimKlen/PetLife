@@ -30,6 +30,24 @@ export async function createPet(pet: NewPet): Promise<void> {
   webDb.savePets(pets);
 }
 
+export async function updatePetInfo(
+  id: number,
+  pet: Omit<NewPet, "name"> & { name: string }
+): Promise<void> {
+  const pets = webDb.loadPets();
+  const index = pets.findIndex((p) => p.id === id);
+  if (index === -1) return;
+  pets[index] = {
+    ...pets[index],
+    name: pet.name,
+    type: pet.type,
+    race: pet.race ?? null,
+    age: pet.age ?? null,
+    photo: pet.photo ?? null,
+  };
+  webDb.savePets(pets);
+}
+
 export async function updatePetStats(
   id: number,
   hunger: number,

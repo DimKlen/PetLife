@@ -1,13 +1,14 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet, ScrollView, Image } from "react-native";
-import { Text } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
+import { Text, IconButton } from "react-native-paper";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePetStore } from "../../store/petStore";
 import HealthBar from "../../components/HealthBar";
 import ActionButtons from "../../components/ActionButtons";
 
 export default function PetHubScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { selectedPet, loadPet, performAction } = usePetStore();
 
   useEffect(() => {
@@ -35,9 +36,16 @@ export default function PetHubScreen() {
         />
       )}
 
-      <Text variant="headlineMedium" style={styles.name}>
-        {selectedPet.name}
-      </Text>
+      <View style={styles.nameRow}>
+        <Text variant="headlineMedium" style={styles.name}>
+          {selectedPet.name}
+        </Text>
+        <IconButton
+          icon="pencil"
+          size={20}
+          onPress={() => router.push(`/edit-pet/${id}` as never)}
+        />
+      </View>
       <Text variant="bodyLarge" style={styles.type}>
         {selectedPet.type}
         {selectedPet.race ? ` · ${selectedPet.race}` : ""}
@@ -75,6 +83,10 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 12,
     backgroundColor: "#eee",
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   name: {
     fontWeight: "700",
