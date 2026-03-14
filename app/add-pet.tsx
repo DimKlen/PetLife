@@ -1,9 +1,71 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
-import { TextInput, Button } from "react-native-paper";
+import { TextInput, Button, Menu } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { createPet } from "../database/petRepository";
+
+const RACES_BY_TYPE: Record<string, string[]> = {
+  Chien: [
+    "Labrador",
+    "Berger Allemand",
+    "Golden Retriever",
+    "Bulldog Français",
+    "Caniche",
+    "Chihuahua",
+    "Husky",
+    "Beagle",
+    "Rottweiler",
+    "Yorkshire",
+  ],
+  Chat: [
+    "Européen",
+    "Siamois",
+    "Persan",
+    "Maine Coon",
+    "British Shorthair",
+    "Bengal",
+    "Ragdoll",
+    "Sphynx",
+    "Abyssin",
+    "Sacré de Birmanie",
+  ],
+  Lapin: [
+    "Nain",
+    "Bélier",
+    "Rex",
+    "Angora",
+    "Hollandais",
+    "Géant des Flandres",
+  ],
+  Hamster: ["Doré", "Russe", "Roborovski", "Chinois", "Campbell"],
+  Cochon_d_Inde: ["Péruvien", "Abyssinien", "Shelty", "Couronné", "Rex"],
+  Perroquet: [
+    "Perruche",
+    "Cacatoès",
+    "Gris du Gabon",
+    "Ara",
+    "Inséparable",
+    "Calopsitte",
+  ],
+  Poisson: [
+    "Poisson rouge",
+    "Betta",
+    "Guppy",
+    "Néon",
+    "Scalaire",
+    "Combattant",
+  ],
+  Tortue: [
+    "Hermann",
+    "Grecque",
+    "Sulcata",
+    "Pelomedusa",
+    "Floride",
+  ],
+};
+
+const PET_TYPES = Object.keys(RACES_BY_TYPE);
 
 export default function AddPetScreen() {
   const router = useRouter();
@@ -12,6 +74,10 @@ export default function AddPetScreen() {
   const [race, setRace] = useState("");
   const [age, setAge] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [typeMenuVisible, setTypeMenuVisible] = useState(false);
+  const [raceMenuVisible, setRaceMenuVisible] = useState(false);
+
+  const availableRaces = type ? RACES_BY_TYPE[type] ?? [] : [];
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -52,21 +118,61 @@ export default function AddPetScreen() {
         mode="outlined"
         style={styles.input}
       />
-      <TextInput
-        label="Type *"
-        value={type}
-        onChangeText={setType}
-        mode="outlined"
-        style={styles.input}
-        placeholder="e.g. Dog, Cat, Hamster"
-      />
-      <TextInput
-        label="Race"
-        value={race}
-        onChangeText={setRace}
-        mode="outlined"
-        style={styles.input}
-      />
+      <Menu
+        visible={typeMenuVisible}
+        onDismiss={() => setTypeMenuVisible(false)}
+        anchor={
+          <TextInput
+            label="Type *"
+            value={type}
+            mode="outlined"
+            style={styles.input}
+            editable={false}
+            right={<TextInput.Icon icon="chevron-down" onPress={() => setTypeMenuVisible(true)} />}
+            onPressIn={() => setTypeMenuVisible(true)}
+          />
+        }
+      >
+        {PET_TYPES.map((t) => (
+          <Menu.Item
+            key={t}
+            title={t.replace(/_/g, " ")}
+            onPress={() => {
+              setType(t);
+              setRace("");
+              setTypeMenuVisible(false);
+            }}
+          />
+        ))}
+      </Menu>
+
+      <Menu
+        visible={raceMenuVisible}
+        onDismiss={() => setRaceMenuVisible(false)}
+        anchor={
+          <TextInput
+            label="Race"
+            value={race}
+            mode="outlined"
+            style={styles.input}
+            editable={false}
+            disabled={availableRaces.length === 0}
+            right={<TextInput.Icon icon="chevron-down" onPress={() => setRaceMenuVisible(true)} />}
+            onPressIn={() => availableRaces.length > 0 && setRaceMenuVisible(true)}
+          />
+        }
+      >
+        {availableRaces.map((r) => (
+          <Menu.Item
+            key={r}
+            title={r}
+            onPress={() => {
+              setRace(r);
+              setRaceMenuVisible(false);
+            }}
+          />
+        ))}
+      </Menu>
       <TextInput
         label="Age"
         value={age}
