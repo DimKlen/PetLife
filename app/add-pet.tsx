@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, Image, Alert, Pressable } from "react-native";
 import { TextInput, Button, Menu } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -117,20 +117,24 @@ export default function AddPetScreen() {
         onChangeText={(text) => { if (/^[a-zA-ZÀ-ÿ\s]*$/.test(text)) setName(text); }}
         mode="outlined"
         style={styles.input}
+        testID="input-name"
       />
       <Menu
         visible={typeMenuVisible}
         onDismiss={() => setTypeMenuVisible(false)}
         anchor={
-          <TextInput
-            label="Type *"
-            value={type}
-            mode="outlined"
-            style={styles.input}
-            editable={false}
-            right={<TextInput.Icon icon="chevron-down" onPress={() => setTypeMenuVisible(true)} />}
-            onPressIn={() => setTypeMenuVisible(true)}
-          />
+          <Pressable testID="press-type" onPress={() => setTypeMenuVisible(true)}>
+            <TextInput
+              label="Type *"
+              value={type}
+              mode="outlined"
+              style={styles.input}
+              editable={false}
+              testID="input-type"
+              right={<TextInput.Icon icon="chevron-down" onPress={() => setTypeMenuVisible(true)} />}
+              pointerEvents="none"
+            />
+          </Pressable>
         }
       >
         {PET_TYPES.map((t) => (
@@ -150,16 +154,23 @@ export default function AddPetScreen() {
         visible={raceMenuVisible}
         onDismiss={() => setRaceMenuVisible(false)}
         anchor={
-          <TextInput
-            label="Race"
-            value={race}
-            mode="outlined"
-            style={styles.input}
-            editable={false}
+          <Pressable
+            testID="press-race"
+            onPress={() => availableRaces.length > 0 && setRaceMenuVisible(true)}
             disabled={availableRaces.length === 0}
-            right={<TextInput.Icon icon="chevron-down" onPress={() => setRaceMenuVisible(true)} />}
-            onPressIn={() => availableRaces.length > 0 && setRaceMenuVisible(true)}
-          />
+          >
+            <TextInput
+              label="Race"
+              value={race}
+              mode="outlined"
+              style={styles.input}
+              editable={false}
+              testID="input-race"
+              disabled={availableRaces.length === 0}
+              right={<TextInput.Icon icon="chevron-down" onPress={() => setRaceMenuVisible(true)} />}
+              pointerEvents="none"
+            />
+          </Pressable>
         }
       >
         {availableRaces.map((r) => (
@@ -177,6 +188,7 @@ export default function AddPetScreen() {
         label="Age"
         value={age}
         onChangeText={(text) => { if (/^\d*$/.test(text)) setAge(text); }}
+        testID="input-age"
         mode="outlined"
         style={styles.input}
         keyboardType="numeric"
