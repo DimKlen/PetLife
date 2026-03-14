@@ -21,6 +21,17 @@ export async function createPet(pet: NewPet): Promise<void> {
   );
 }
 
+export async function updatePetInfo(
+  id: number,
+  pet: Omit<NewPet, "name"> & { name: string }
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    "UPDATE pets SET name = ?, type = ?, race = ?, age = ?, photo = ? WHERE id = ?",
+    [pet.name, pet.type, pet.race ?? null, pet.age ?? null, pet.photo ?? null, id]
+  );
+}
+
 export async function updatePetStats(
   id: number,
   hunger: number,
