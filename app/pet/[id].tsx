@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useCallback } from "react";
 import { View, StyleSheet, ScrollView, Image } from "react-native";
 import { Text, IconButton } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { usePetStore } from "../../store/petStore";
 import HealthBar from "../../components/HealthBar";
 import ActionButtons from "../../components/ActionButtons";
@@ -11,11 +11,11 @@ export default function PetHubScreen() {
   const router = useRouter();
   const { selectedPet, loadPet, performAction } = usePetStore();
 
-  useEffect(() => {
-    if (id) {
-      loadPet(Number(id));
-    }
-  }, [id, loadPet]);
+  useFocusEffect(
+    useCallback(() => {
+      if (id) loadPet(Number(id));
+    }, [id, loadPet])
+  );
 
   if (!selectedPet) {
     return (
