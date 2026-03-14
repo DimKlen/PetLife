@@ -114,7 +114,7 @@ export default function AddPetScreen() {
       <TextInput
         label="Name *"
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => { if (/^[a-zA-ZÀ-ÿ\s]*$/.test(text)) setName(text); }}
         mode="outlined"
         style={styles.input}
       />
@@ -176,7 +176,7 @@ export default function AddPetScreen() {
       <TextInput
         label="Age"
         value={age}
-        onChangeText={setAge}
+        onChangeText={(text) => { if (/^\d*$/.test(text)) setAge(text); }}
         mode="outlined"
         style={styles.input}
         keyboardType="numeric"
