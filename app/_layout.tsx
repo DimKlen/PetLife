@@ -8,6 +8,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ title: "My Pets" }} />
         <Stack.Screen name="add-pet" options={{ title: "Add Pet" }} />
         <Stack.Screen name="pet/[id]" options={{ title: "Pet Hub" }} />
+        <Stack.Screen name="edit-pet/[id]" options={{ title: "Edit Pet" }} />
       </Stack>
     </PaperProvider>
   );

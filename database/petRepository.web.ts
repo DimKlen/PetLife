@@ -23,6 +23,8 @@ export async function createPet(pet: NewPet): Promise<void> {
     hunger: 100,
     thirst: 100,
     mood: 100,
+    energy: 100,
+    hygiene: 100,
     last_update: now,
     created_at: now,
   };
@@ -53,11 +55,13 @@ export async function updatePetStats(
   hunger: number,
   thirst: number,
   mood: number,
+  energy: number,
+  hygiene: number,
   lastUpdate: number
 ): Promise<void> {
   const pets = webDb.loadPets();
   const index = pets.findIndex((p) => p.id === id);
   if (index === -1) return;
-  pets[index] = { ...pets[index], hunger, thirst, mood, last_update: lastUpdate };
+  pets[index] = { ...pets[index], hunger, thirst, mood, energy, hygiene, last_update: lastUpdate };
   webDb.savePets(pets);
 }

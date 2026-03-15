@@ -18,10 +18,24 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       hunger INTEGER DEFAULT 100,
       thirst INTEGER DEFAULT 100,
       mood INTEGER DEFAULT 100,
+      energy INTEGER DEFAULT 100,
+      hygiene INTEGER DEFAULT 100,
       last_update INTEGER,
       created_at INTEGER
     );
   `);
+
+  // Migrations pour les colonnes ajoutées après la création initiale
+  try {
+    await db.execAsync("ALTER TABLE pets ADD COLUMN energy INTEGER DEFAULT 100");
+  } catch {
+    // Colonne déjà existante
+  }
+  try {
+    await db.execAsync("ALTER TABLE pets ADD COLUMN hygiene INTEGER DEFAULT 100");
+  } catch {
+    // Colonne déjà existante
+  }
 
   return db;
 }

@@ -4,6 +4,8 @@ const DECAY_PER_HOUR = {
   hunger: 5,
   thirst: 7,
   mood: 3,
+  energy: 2,
+  hygiene: 1,
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -14,6 +16,8 @@ export function applyTimeDegradation(pet: Pet): {
   hunger: number;
   thirst: number;
   mood: number;
+  energy: number;
+  hygiene: number;
 } {
   const now = Date.now();
   const hoursElapsed = (now - pet.last_update) / (1000 * 60 * 60);
@@ -22,24 +26,33 @@ export function applyTimeDegradation(pet: Pet): {
     hunger: clamp(Math.round(pet.hunger - DECAY_PER_HOUR.hunger * hoursElapsed), 0, 100),
     thirst: clamp(Math.round(pet.thirst - DECAY_PER_HOUR.thirst * hoursElapsed), 0, 100),
     mood: clamp(Math.round(pet.mood - DECAY_PER_HOUR.mood * hoursElapsed), 0, 100),
+    energy: clamp(Math.round((pet.energy ?? 100) - DECAY_PER_HOUR.energy * hoursElapsed), 0, 100),
+    hygiene: clamp(Math.round((pet.hygiene ?? 100) - DECAY_PER_HOUR.hygiene * hoursElapsed), 0, 100),
   };
 }
 
 export function applyAction(
-  current: { hunger: number; thirst: number; mood: number },
-  action: "feed" | "water" | "play"
-): { hunger: number; thirst: number; mood: number } {
+  current: { hunger: number; thirst: number; mood: number; energy: number; hygiene: number },
+  action: "feed" | "water" | "play" | "clean"
+): { hunger: number; thirst: number; mood: number; energy: number; hygiene: number } {
   const result = { ...current };
 
   switch (action) {
     case "feed":
       result.hunger = clamp(result.hunger + 30, 0, 100);
+      result.energy = clamp(result.energy - 5, 0, 100);
       break;
     case "water":
-      result.thirst = clamp(result.thirst + 30, 0, 100);
+      result.thirst = clamp(result.thirst + 35, 0, 100);
       break;
     case "play":
-      result.mood = clamp(result.mood + 30, 0, 100);
+      result.mood = clamp(result.mood + 25, 0, 100);
+      result.energy = clamp(result.energy - 15, 0, 100);
+      result.hunger = clamp(result.hunger - 10, 0, 100);
+      break;
+    case "clean":
+      result.hygiene = clamp(result.hygiene + 40, 0, 100);
+      result.mood = clamp(result.mood - 5, 0, 100);
       break;
   }
 

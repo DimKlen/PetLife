@@ -3,17 +3,26 @@ import { Pet } from "../types/pet";
 import { getAllPets, getPetById, updatePetStats } from "../database/petRepository";
 import { applyTimeDegradation, applyAction } from "../engine/tamagotchiEngine";
 
+function computeOverallHealth(pet: Pet): number {
+  return Math.round((pet.hunger + pet.thirst + pet.mood + pet.energy + pet.hygiene) / 5);
+}
+
 interface PetStore {
   pets: Pet[];
   selectedPet: Pet | null;
+  overallHealth: number;
   loadPets: () => Promise<void>;
   loadPet: (id: number) => Promise<void>;
-  performAction: (action: "feed" | "water" | "play") => Promise<void>;
+  feed: () => Promise<void>;
+  giveWater: () => Promise<void>;
+  play: () => Promise<void>;
+  clean: () => Promise<void>;
 }
 
 export const usePetStore = create<PetStore>((set, get) => ({
   pets: [],
   selectedPet: null,
+  overallHealth: 0,
 
   loadPets: async () => {
     const pets = await getAllPets();
@@ -27,40 +36,78 @@ export const usePetStore = create<PetStore>((set, get) => ({
     const degraded = applyTimeDegradation(pet);
     const now = Date.now();
 
-    await updatePetStats(id, degraded.hunger, degraded.thirst, degraded.mood, now);
+    await updatePetStats(
+      id,
+      degraded.hunger,
+      degraded.thirst,
+      degraded.mood,
+      degraded.energy,
+      degraded.hygiene,
+      now
+    );
 
-    set({
-      selectedPet: {
-        ...pet,
-        hunger: degraded.hunger,
-        thirst: degraded.thirst,
-        mood: degraded.mood,
-        last_update: now,
-      },
-    });
-  },
-
-  performAction: async (action) => {
-    const { selectedPet } = get();
-    if (!selectedPet) return;
-
-    const current = {
-      hunger: selectedPet.hunger,
-      thirst: selectedPet.thirst,
-      mood: selectedPet.mood,
+    const updated: Pet = {
+      ...pet,
+      hunger: degraded.hunger,
+      thirst: degraded.thirst,
+      mood: degraded.mood,
+      energy: degraded.energy,
+      hygiene: degraded.hygiene,
+      last_update: now,
     };
 
-    const updated = applyAction(current, action);
+    set({ selectedPet: updated, overallHealth: computeOverallHealth(updated) });
+  },
+
+  feed: async () => {
+    const { selectedPet } = get();
+    if (!selectedPet) return;
+    const updated = applyAction(
+      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
+      "feed"
+    );
     const now = Date.now();
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    const next = { ...selectedPet, ...updated, last_update: now };
+    set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
+  },
 
-    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, now);
+  giveWater: async () => {
+    const { selectedPet } = get();
+    if (!selectedPet) return;
+    const updated = applyAction(
+      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
+      "water"
+    );
+    const now = Date.now();
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    const next = { ...selectedPet, ...updated, last_update: now };
+    set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
+  },
 
-    set({
-      selectedPet: {
-        ...selectedPet,
-        ...updated,
-        last_update: now,
-      },
-    });
+  play: async () => {
+    const { selectedPet } = get();
+    if (!selectedPet) return;
+    const updated = applyAction(
+      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
+      "play"
+    );
+    const now = Date.now();
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    const next = { ...selectedPet, ...updated, last_update: now };
+    set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
+  },
+
+  clean: async () => {
+    const { selectedPet } = get();
+    if (!selectedPet) return;
+    const updated = applyAction(
+      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
+      "clean"
+    );
+    const now = Date.now();
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    const next = { ...selectedPet, ...updated, last_update: now };
+    set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
   },
 }));
