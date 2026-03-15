@@ -1,13 +1,22 @@
 import { create } from "zustand";
 import { Pet } from "../types/pet";
+import { CalendarEvent } from "../types/event";
 import { getAllPets, getPetById, updatePetStats } from "../database/petRepository";
 import { applyTimeDegradation, applyAction } from "../engine/tamagotchiEngine";
+import {
+  getAllEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  toggleEventComplete as toggleComplete,
+} from "../database/eventRepository";
 
 function computeOverallHealth(pet: Pet): number {
   return Math.round((pet.hunger + pet.thirst + pet.mood + pet.energy + pet.hygiene) / 5);
 }
 
 interface PetStore {
+  // --- Pets ---
   pets: Pet[];
   selectedPet: Pet | null;
   overallHealth: number;
@@ -17,9 +26,25 @@ interface PetStore {
   giveWater: () => Promise<void>;
   play: () => Promise<void>;
   clean: () => Promise<void>;
+
+  // --- Calendrier ---
+  events: CalendarEvent[];
+  selectedDate: string; // "YYYY-MM-DD"
+  filterPetId: number | null;
+  loadEvents: () => Promise<void>;
+  addEvent: (data: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateEvent: (id: string, data: Partial<Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">>) => Promise<void>;
+  deleteEvent: (id: string) => Promise<void>;
+  toggleEventComplete: (id: string) => Promise<void>;
+  setSelectedDate: (date: string) => void;
+  setFilterPetId: (petId: number | null) => void;
+  getEventsByDate: (date: string) => CalendarEvent[];
+  getUpcomingEvents: (limit?: number) => CalendarEvent[];
 }
 
 export const usePetStore = create<PetStore>((set, get) => ({
+  // ─── Pets ─────────────────────────────────────────────────────────────────
+
   pets: [],
   selectedPet: null,
   overallHealth: 0,
@@ -36,36 +61,16 @@ export const usePetStore = create<PetStore>((set, get) => ({
     const degraded = applyTimeDegradation(pet);
     const now = Date.now();
 
-    await updatePetStats(
-      id,
-      degraded.hunger,
-      degraded.thirst,
-      degraded.mood,
-      degraded.energy,
-      degraded.hygiene,
-      now
-    );
+    await updatePetStats(id, degraded.hunger, degraded.thirst, degraded.mood, degraded.energy, degraded.hygiene, now);
 
-    const updated: Pet = {
-      ...pet,
-      hunger: degraded.hunger,
-      thirst: degraded.thirst,
-      mood: degraded.mood,
-      energy: degraded.energy,
-      hygiene: degraded.hygiene,
-      last_update: now,
-    };
-
+    const updated: Pet = { ...pet, ...degraded, last_update: now };
     set({ selectedPet: updated, overallHealth: computeOverallHealth(updated) });
   },
 
   feed: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction(
-      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
-      "feed"
-    );
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "feed");
     const now = Date.now();
     await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
     const next = { ...selectedPet, ...updated, last_update: now };
@@ -75,10 +80,7 @@ export const usePetStore = create<PetStore>((set, get) => ({
   giveWater: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction(
-      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
-      "water"
-    );
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "water");
     const now = Date.now();
     await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
     const next = { ...selectedPet, ...updated, last_update: now };
@@ -88,10 +90,7 @@ export const usePetStore = create<PetStore>((set, get) => ({
   play: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction(
-      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
-      "play"
-    );
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "play");
     const now = Date.now();
     await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
     const next = { ...selectedPet, ...updated, last_update: now };
@@ -101,13 +100,83 @@ export const usePetStore = create<PetStore>((set, get) => ({
   clean: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction(
-      { hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene },
-      "clean"
-    );
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "clean");
     const now = Date.now();
     await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
     const next = { ...selectedPet, ...updated, last_update: now };
     set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
+  },
+
+  // ─── Calendrier ───────────────────────────────────────────────────────────
+
+  events: [],
+  selectedDate: new Date().toISOString().split("T")[0],
+  filterPetId: null,
+
+  loadEvents: async () => {
+    const events = await getAllEvents();
+    set({ events });
+  },
+
+  addEvent: async (data) => {
+    const id = await createEvent(data);
+    const now = new Date().toISOString();
+    const newEvent: CalendarEvent = { ...data, id, createdAt: now, updatedAt: now };
+    set((s) => ({
+      events: [...s.events, newEvent].sort((a, b) =>
+        a.date !== b.date ? a.date.localeCompare(b.date) : (a.time ?? "").localeCompare(b.time ?? "")
+      ),
+    }));
+  },
+
+  updateEvent: async (id, data) => {
+    await updateEvent(id, data);
+    const now = new Date().toISOString();
+    set((s) => ({
+      events: s.events.map((e) => (e.id === id ? { ...e, ...data, updatedAt: now } : e)),
+    }));
+  },
+
+  deleteEvent: async (id) => {
+    await deleteEvent(id);
+    set((s) => ({ events: s.events.filter((e) => e.id !== id) }));
+  },
+
+  toggleEventComplete: async (id) => {
+    const { events } = get();
+    const event = events.find((e) => e.id === id);
+    if (!event) return;
+    await toggleComplete(id, event.completed);
+    const now = new Date().toISOString();
+    set((s) => ({
+      events: s.events.map((e) =>
+        e.id === id ? { ...e, completed: !e.completed, updatedAt: now } : e
+      ),
+    }));
+  },
+
+  setSelectedDate: (date) => set({ selectedDate: date }),
+
+  setFilterPetId: (petId) => set({ filterPetId: petId }),
+
+  getEventsByDate: (date) => {
+    const { events, filterPetId } = get();
+    return events.filter((e) => {
+      if (e.date !== date) return false;
+      if (filterPetId === null) return true;
+      return e.petId === filterPetId || e.petId === null;
+    });
+  },
+
+  getUpcomingEvents: (limit = 5) => {
+    const { events, filterPetId } = get();
+    const today = new Date().toISOString().split("T")[0];
+    return events
+      .filter((e) => {
+        if (e.date < today || e.completed) return false;
+        if (filterPetId === null) return true;
+        return e.petId === filterPetId || e.petId === null;
+      })
+      .slice(0, limit);
   },
 }));

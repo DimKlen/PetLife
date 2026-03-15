@@ -23,19 +23,29 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       last_update INTEGER,
       created_at INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      date TEXT NOT NULL,
+      time TEXT,
+      petId INTEGER REFERENCES pets(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      reminder INTEGER DEFAULT 0,
+      reminderTime INTEGER,
+      completed INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
+    CREATE INDEX IF NOT EXISTS idx_events_petId ON events(petId);
   `);
 
-  // Migrations pour les colonnes ajoutées après la création initiale
-  try {
-    await db.execAsync("ALTER TABLE pets ADD COLUMN energy INTEGER DEFAULT 100");
-  } catch {
-    // Colonne déjà existante
-  }
-  try {
-    await db.execAsync("ALTER TABLE pets ADD COLUMN hygiene INTEGER DEFAULT 100");
-  } catch {
-    // Colonne déjà existante
-  }
+  // Migrations colonnes pets
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN energy INTEGER DEFAULT 100"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN hygiene INTEGER DEFAULT 100"); } catch {}
 
   return db;
 }
