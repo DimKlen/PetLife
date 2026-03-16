@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Pet } from "../types/pet";
-import { CalendarEvent } from "../types/event";
+import { CalendarEvent, eventOccursOnDate } from "../types/event";
 import { getAllPets, getPetById, updatePetStats } from "../database/petRepository";
 import { applyTimeDegradation, applyAction } from "../engine/tamagotchiEngine";
 import {
@@ -124,7 +124,7 @@ export const usePetStore = create<PetStore>((set, get) => ({
     const newEvent: CalendarEvent = { ...data, id, createdAt: now, updatedAt: now };
     set((s) => ({
       events: [...s.events, newEvent].sort((a, b) =>
-        a.date !== b.date ? a.date.localeCompare(b.date) : (a.time ?? "").localeCompare(b.time ?? "")
+        a.date !== b.date ? a.date.localeCompare(b.date) : (a.startTime ?? "").localeCompare(b.startTime ?? "")
       ),
     }));
   },
@@ -162,9 +162,9 @@ export const usePetStore = create<PetStore>((set, get) => ({
   getEventsByDate: (date) => {
     const { events, filterPetId } = get();
     return events.filter((e) => {
-      if (e.date !== date) return false;
+      if (!eventOccursOnDate(e, date)) return false;
       if (filterPetId === null) return true;
-      return e.petId === filterPetId || e.petId === null;
+      return e.petIds.length === 0 || e.petIds.includes(filterPetId);
     });
   },
 
@@ -173,9 +173,12 @@ export const usePetStore = create<PetStore>((set, get) => ({
     const today = new Date().toISOString().split("T")[0];
     return events
       .filter((e) => {
-        if (e.date < today || e.completed) return false;
+        if (e.completed) return false;
+        // un event récurrent a toujours des occurrences futures
+        if (e.repeat !== "never") return e.date <= today || e.date > today;
+        if (e.date < today) return false;
         if (filterPetId === null) return true;
-        return e.petId === filterPetId || e.petId === null;
+        return e.petIds.length === 0 || e.petIds.includes(filterPetId);
       })
       .slice(0, limit);
   },

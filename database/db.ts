@@ -47,5 +47,14 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   try { await db.execAsync("ALTER TABLE pets ADD COLUMN energy INTEGER DEFAULT 100"); } catch {}
   try { await db.execAsync("ALTER TABLE pets ADD COLUMN hygiene INTEGER DEFAULT 100"); } catch {}
 
+  // Migrations colonnes events (v2 : nouveaux champs)
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN allDay INTEGER DEFAULT 0"); } catch {}
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN startTime TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN endTime TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN petIds TEXT DEFAULT '[]'"); } catch {}
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN repeat TEXT DEFAULT 'never'"); } catch {}
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN location TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE events ADD COLUMN reminders TEXT DEFAULT '[30]'"); } catch {}
+
   return db;
 }

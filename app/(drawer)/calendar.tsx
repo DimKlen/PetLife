@@ -10,7 +10,7 @@ import {
   Dimensions,
   Image,
 } from "react-native";
-import { Appbar, FAB, Chip, Text } from "react-native-paper";
+import { Appbar, FAB, Text } from "react-native-paper";
 import { DrawerActions } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import { useFocusEffect } from "expo-router";
@@ -19,7 +19,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePetStore } from "../../store/petStore";
 import { EventCard } from "../../components/EventCard";
 import { AddEventModal } from "../../components/AddEventModal";
-import { getEventColor } from "../../types/event";
+import { getEventColor, eventOccursOnDate } from "../../types/event";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -76,6 +76,7 @@ function formatDayHeader(dateStr: string): string {
 export default function CalendarScreen() {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<import("../../types/event").CalendarEvent | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   const {
@@ -102,14 +103,22 @@ export default function CalendarScreen() {
     setExpanded((prev) => !prev);
   };
 
-  // Jours qui ont des events (pour les dots sur le week strip)
+  const weekDays = getWeekDays(selectedDate);
+  const dayEvents = getEventsByDate(selectedDate);
+  const DAY_W = (SCREEN_WIDTH - 32) / 7;
+
+  // Jours de la semaine qui ont des events (dots sur le week strip)
   const daysWithEvents = new Set(
-    events
-      .filter((e) => filterPetId === null || e.petId === filterPetId || e.petId === null)
-      .map((e) => e.date)
+    weekDays.filter((day) =>
+      events.some(
+        (e) =>
+          eventOccursOnDate(e, day) &&
+          (filterPetId === null || e.petIds.length === 0 || e.petIds.includes(filterPetId))
+      )
+    )
   );
 
-  // MarkedDates pour le Calendar complet
+  // MarkedDates pour le Calendar complet (mois visible = mois de selectedDate)
   const getMarkedDates = () => {
     const marked: Record<string, {
       dots?: { color: string }[];
@@ -118,12 +127,24 @@ export default function CalendarScreen() {
       marked?: boolean;
     }> = {};
 
+    // Génère tous les jours du mois affiché pour propager la récurrence
+    const [y, m] = selectedDate.split("-").map(Number);
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const monthDays = Array.from({ length: daysInMonth }, (_, i) =>
+      `${selectedDate.substring(0, 7)}-${String(i + 1).padStart(2, "0")}`
+    );
+
     events.forEach((e) => {
-      if (filterPetId !== null && e.petId !== filterPetId && e.petId !== null) return;
-      const existing = marked[e.date] ?? {};
-      const dots = existing.dots ?? [];
-      if (dots.length < 3) dots.push({ color: getEventColor(e.type) });
-      marked[e.date] = { ...existing, dots, marked: true };
+      if (filterPetId !== null && e.petIds.length > 0 && !e.petIds.includes(filterPetId)) return;
+      const datesToMark = e.repeat === "never"
+        ? [e.date]
+        : monthDays.filter((d) => eventOccursOnDate(e, d));
+      datesToMark.forEach((date) => {
+        const existing = marked[date] ?? {};
+        const dots = existing.dots ?? [];
+        if (dots.length < 3) dots.push({ color: getEventColor(e.type) });
+        marked[date] = { ...existing, dots, marked: true };
+      });
     });
 
     marked[selectedDate] = {
@@ -134,11 +155,6 @@ export default function CalendarScreen() {
 
     return marked;
   };
-
-  const weekDays = getWeekDays(selectedDate);
-  const dayEvents = getEventsByDate(selectedDate);
-
-  const DAY_W = (SCREEN_WIDTH - 32) / 7;
 
   return (
     <View style={styles.container}>
@@ -252,32 +268,33 @@ export default function CalendarScreen() {
           style={styles.filtersScroll}
           contentContainerStyle={styles.filtersContent}
         >
-          <Chip
-            selected={filterPetId === null}
+          <TouchableOpacity
             onPress={() => setFilterPetId(null)}
-            style={styles.chip}
-            selectedColor="#667eea"
-            compact
+            style={[styles.filterPill, filterPetId === null && styles.filterPillSelected]}
+            activeOpacity={0.7}
           >
-            🐾 Tous
-          </Chip>
-          {pets.map((pet) => (
-            <Chip
-              key={pet.id}
-              selected={filterPetId === pet.id}
-              onPress={() => setFilterPetId(pet.id)}
-              style={styles.chip}
-              selectedColor="#667eea"
-              compact
-              avatar={
-                pet.photo
-                  ? <Image source={{ uri: pet.photo }} style={styles.chipAvatar} />
-                  : undefined
-              }
-            >
-              {pet.name}
-            </Chip>
-          ))}
+            <Text style={[styles.filterPillText, filterPetId === null && styles.filterPillTextSelected]}>
+              🐾 Tous
+            </Text>
+          </TouchableOpacity>
+          {pets.map((pet) => {
+            const selected = filterPetId === pet.id;
+            return (
+              <TouchableOpacity
+                key={pet.id}
+                onPress={() => setFilterPetId(pet.id)}
+                style={[styles.filterPill, selected && styles.filterPillSelected]}
+                activeOpacity={0.7}
+              >
+                {pet.photo && (
+                  <Image source={{ uri: pet.photo }} style={styles.filterPillAvatar} />
+                )}
+                <Text style={[styles.filterPillText, selected && styles.filterPillTextSelected]}>
+                  {pet.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       )}
 
@@ -304,7 +321,7 @@ export default function CalendarScreen() {
           </View>
         ) : (
           dayEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={event.id} event={event} onEdit={() => setEditingEvent(event)} />
           ))
         )}
       </ScrollView>
@@ -318,6 +335,11 @@ export default function CalendarScreen() {
       />
 
       <AddEventModal visible={modalVisible} onDismiss={() => setModalVisible(false)} />
+      <AddEventModal
+        visible={editingEvent !== null}
+        onDismiss={() => setEditingEvent(null)}
+        event={editingEvent ?? undefined}
+      />
     </View>
   );
 }
@@ -449,13 +471,32 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: "center",
   },
-  chip: {
-    marginRight: 2,
+  filterPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+    marginRight: 6,
   },
-  chipAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  filterPillSelected: {
+    backgroundColor: "#4c5fd5",
+  },
+  filterPillText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#555",
+  },
+  filterPillTextSelected: {
+    color: "white",
+    fontWeight: "700",
+  },
+  filterPillAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
   },
 
   // Events list

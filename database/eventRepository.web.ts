@@ -22,7 +22,7 @@ function saveEvents(events: CalendarEvent[]): void {
 export async function getAllEvents(): Promise<CalendarEvent[]> {
   return loadEvents().sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
-    return (a.time ?? "").localeCompare(b.time ?? "");
+    return (a.startTime ?? "").localeCompare(b.startTime ?? "");
   });
 }
 
@@ -31,7 +31,7 @@ export async function createEvent(
 ): Promise<string> {
   const events = loadEvents();
   const now = new Date().toISOString();
-  const id = generateId();
+  const id  = generateId();
   events.push({ ...data, id, createdAt: now, updatedAt: now });
   saveEvents(events);
   return id;
@@ -42,7 +42,7 @@ export async function updateEvent(
   data: Partial<Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">>
 ): Promise<void> {
   const events = loadEvents();
-  const index = events.findIndex((e) => e.id === id);
+  const index  = events.findIndex((e) => e.id === id);
   if (index === -1) return;
   events[index] = { ...events[index], ...data, updatedAt: new Date().toISOString() };
   saveEvents(events);

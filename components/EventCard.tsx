@@ -1,32 +1,46 @@
 import React from "react";
-import { View, StyleSheet, Image, Alert } from "react-native";
-import { Card, Text, Checkbox, IconButton } from "react-native-paper";
+import { View, StyleSheet, Image, Alert, Pressable } from "react-native";
+import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { CalendarEvent, getEventColor, getEventIcon, getEventLabel } from "../types/event";
+import {
+  CalendarEvent,
+  getEventColor,
+  getEventIcon,
+  getEventLabel,
+  REPEAT_CONFIG,
+} from "../types/event";
 import { usePetStore } from "../store/petStore";
 
 interface Props {
   event: CalendarEvent;
+  onEdit: () => void;
 }
 
-export function EventCard({ event }: Props) {
-  const { pets, toggleEventComplete, deleteEvent } = usePetStore();
-  const pet = event.petId !== null ? pets.find((p) => p.id === event.petId) : null;
+export function EventCard({ event, onEdit }: Props) {
+  const { pets, deleteEvent } = usePetStore();
   const color = getEventColor(event.type);
+
+  const associatedPets = event.petIds.length > 0
+    ? pets.filter((p) => event.petIds.includes(p.id))
+    : [];
 
   const handleDelete = () => {
     Alert.alert("Supprimer l'événement", `Supprimer "${event.title}" ?`, [
       { text: "Annuler", style: "cancel" },
-      {
-        text: "Supprimer",
-        style: "destructive",
-        onPress: () => deleteEvent(event.id),
-      },
+      { text: "Supprimer", style: "destructive", onPress: () => deleteEvent(event.id) },
     ]);
   };
 
+  const timeLabel = event.allDay
+    ? "Toute la journée"
+    : event.startTime
+      ? event.endTime
+        ? `${event.startTime} – ${event.endTime}`
+        : event.startTime
+      : null;
+
   return (
-    <Card style={[styles.card, event.completed && styles.cardCompleted]}>
+    <Card style={styles.card} onPress={onEdit}>
       <Card.Content style={styles.content}>
         {/* Icône type */}
         <View style={[styles.iconWrapper, { backgroundColor: `${color}22` }]}>
@@ -37,33 +51,43 @@ export function EventCard({ event }: Props) {
         <View style={styles.info}>
           <Text
             variant="titleSmall"
-            style={[styles.title, event.completed && styles.textCompleted]}
+            style={styles.title}
             numberOfLines={1}
           >
             {event.title}
           </Text>
 
           <View style={styles.meta}>
-            {event.time && (
+            {timeLabel && (
               <View style={styles.metaItem}>
                 <MaterialCommunityIcons name="clock-outline" size={12} color="#888" />
-                <Text style={styles.metaText}>{event.time}</Text>
+                <Text style={styles.metaText}>{timeLabel}</Text>
               </View>
             )}
             <View style={[styles.typeBadge, { backgroundColor: `${color}22` }]}>
               <Text style={[styles.typeBadgeText, { color }]}>{getEventLabel(event.type)}</Text>
             </View>
+            {event.repeat !== "never" && (
+              <View style={styles.metaItem}>
+                <MaterialCommunityIcons name="repeat" size={12} color="#888" />
+                <Text style={styles.metaText}>{REPEAT_CONFIG[event.repeat]}</Text>
+              </View>
+            )}
           </View>
 
-          {/* Animal associé */}
-          {pet ? (
+          {/* Animaux associés */}
+          {associatedPets.length > 0 ? (
             <View style={styles.petRow}>
-              {pet.photo ? (
-                <Image source={{ uri: pet.photo }} style={styles.petPhoto} />
-              ) : (
-                <MaterialCommunityIcons name="paw" size={14} color="#667eea" />
+              {associatedPets.map((pet) =>
+                pet.photo ? (
+                  <Image key={pet.id} source={{ uri: pet.photo }} style={styles.petPhoto} />
+                ) : (
+                  <MaterialCommunityIcons key={pet.id} name="paw" size={14} color="#667eea" />
+                )
               )}
-              <Text style={styles.petName}>{pet.name}</Text>
+              <Text style={styles.petName}>
+                {associatedPets.map((p) => p.name).join(", ")}
+              </Text>
             </View>
           ) : (
             <View style={styles.petRow}>
@@ -74,22 +98,19 @@ export function EventCard({ event }: Props) {
         </View>
 
         {/* Actions */}
-        <View style={styles.actions}>
-          <Checkbox
-            status={event.completed ? "checked" : "unchecked"}
-            onPress={() => toggleEventComplete(event.id)}
-            color="#667eea"
-          />
-          <IconButton
-            icon="trash-can-outline"
-            size={18}
-            iconColor="#ccc"
+        <View onStartShouldSetResponder={() => true}>
+          <TouchableOpacity
             onPress={handleDelete}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.deleteBtn}
             accessibilityLabel="Supprimer l'événement"
-          />
+          >
+            <MaterialCommunityIcons name="trash-can-outline" size={20} color="#ccc" />
+          </TouchableOpacity>
         </View>
       </Card.Content>
     </Card>
+    </TouchableOpacity>
   );
 }
 
@@ -98,9 +119,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 14,
     backgroundColor: "white",
-  },
-  cardCompleted: {
-    opacity: 0.55,
   },
   content: {
     flexDirection: "row",
@@ -125,10 +143,6 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: "700",
     color: "#222",
-  },
-  textCompleted: {
-    textDecorationLine: "line-through",
-    color: "#aaa",
   },
   meta: {
     flexDirection: "row",
@@ -173,7 +187,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#888",
   },
-  actions: {
-    alignItems: "center",
+  deleteBtn: {
+    padding: 6,
   },
 });
