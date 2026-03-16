@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 import { Text } from "react-native-paper";
@@ -13,14 +13,16 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const { pets } = usePetStore();
   const { state, navigation } = props;
 
-  const navigateTo = (screen: string) => {
-    navigation.closeDrawer();
-    router.push(screen as never);
+  const isActive = (name: string) => state.routes[state.index]?.name === name;
+
+  const goToDrawerScreen = (screen: string) => {
+    navigation.navigate(screen);
   };
 
-  const isActive = (name: string) => {
-    const focused = state.routes[state.index]?.name;
-    return focused === name;
+  const goToPet = (petId: number) => {
+    navigation.closeDrawer();
+    // Petit délai pour laisser le drawer se fermer avant la navigation Stack
+    setTimeout(() => router.push(`/pet/${petId}` as never), 200);
   };
 
   return (
@@ -40,13 +42,13 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
           icon="home"
           label="Mes Animaux"
           active={isActive("index")}
-          onPress={() => navigation.navigate("index")}
+          onPress={() => goToDrawerScreen("index")}
         />
         <DrawerItem
           icon="calendar"
           label="Calendrier"
           active={isActive("calendar")}
-          onPress={() => navigation.navigate("calendar")}
+          onPress={() => goToDrawerScreen("calendar")}
         />
       </View>
 
@@ -55,19 +57,23 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Accès rapide</Text>
           {pets.slice(0, 4).map((pet) => (
-            <View key={pet.id} style={styles.petItem}>
-              <View onTouchEnd={() => navigateTo(`/pet/${pet.id}`)} style={styles.petRow}>
-                {pet.photo ? (
-                  <Image source={{ uri: pet.photo }} style={styles.petPhoto} />
-                ) : (
-                  <View style={styles.petPhotoPlaceholder}>
-                    <MaterialCommunityIcons name="paw" size={18} color="#667eea" />
-                  </View>
-                )}
-                <Text style={styles.petName}>{pet.name}</Text>
-                <Text style={styles.petType}>{pet.type}</Text>
-              </View>
-            </View>
+            <TouchableOpacity
+              key={pet.id}
+              style={styles.petRow}
+              onPress={() => goToPet(pet.id)}
+              activeOpacity={0.7}
+              accessibilityLabel={`Voir le profil de ${pet.name}`}
+            >
+              {pet.photo ? (
+                <Image source={{ uri: pet.photo }} style={styles.petPhoto} />
+              ) : (
+                <View style={styles.petPhotoPlaceholder}>
+                  <MaterialCommunityIcons name="paw" size={18} color="#667eea" />
+                </View>
+              )}
+              <Text style={styles.petName}>{pet.name}</Text>
+              <Text style={styles.petType}>{pet.type}</Text>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -87,9 +93,12 @@ function DrawerItem({
   onPress: () => void;
 }) {
   return (
-    <View
+    <TouchableOpacity
       style={[styles.drawerItem, active && styles.drawerItemActive]}
-      onTouchEnd={onPress}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <MaterialCommunityIcons
         name={icon}
@@ -98,7 +107,7 @@ function DrawerItem({
         style={styles.drawerIcon}
       />
       <Text style={[styles.drawerLabel, active && styles.drawerLabelActive]}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -158,14 +167,13 @@ const styles = StyleSheet.create({
     color: "#667eea",
     fontWeight: "700",
   },
-  petItem: {
-    marginHorizontal: 8,
-  },
   petRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 10,
+    marginHorizontal: 8,
+    borderRadius: 10,
   },
   petPhoto: {
     width: 34,
