@@ -1,71 +1,10 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Image, Alert, Pressable } from "react-native";
 import { TextInput, Button, Menu } from "react-native-paper";
-import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { createPet } from "../database/petRepository";
-
-const RACES_BY_TYPE: Record<string, string[]> = {
-  Chien: [
-    "Labrador",
-    "Berger Allemand",
-    "Golden Retriever",
-    "Bulldog Français",
-    "Caniche",
-    "Chihuahua",
-    "Husky",
-    "Beagle",
-    "Rottweiler",
-    "Yorkshire",
-  ],
-  Chat: [
-    "Européen",
-    "Siamois",
-    "Persan",
-    "Maine Coon",
-    "British Shorthair",
-    "Bengal",
-    "Ragdoll",
-    "Sphynx",
-    "Abyssin",
-    "Sacré de Birmanie",
-  ],
-  Lapin: [
-    "Nain",
-    "Bélier",
-    "Rex",
-    "Angora",
-    "Hollandais",
-    "Géant des Flandres",
-  ],
-  Hamster: ["Doré", "Russe", "Roborovski", "Chinois", "Campbell"],
-  Cochon_d_Inde: ["Péruvien", "Abyssinien", "Shelty", "Couronné", "Rex"],
-  Perroquet: [
-    "Perruche",
-    "Cacatoès",
-    "Gris du Gabon",
-    "Ara",
-    "Inséparable",
-    "Calopsitte",
-  ],
-  Poisson: [
-    "Poisson rouge",
-    "Betta",
-    "Guppy",
-    "Néon",
-    "Scalaire",
-    "Combattant",
-  ],
-  Tortue: [
-    "Hermann",
-    "Grecque",
-    "Sulcata",
-    "Pelomedusa",
-    "Floride",
-  ],
-};
-
-const PET_TYPES = Object.keys(RACES_BY_TYPE);
+import { RACES_BY_TYPE, PET_TYPES } from "../constants/petTypes";
+import { pickPetImage } from "../utils/imagePicker";
 
 export default function AddPetScreen() {
   const router = useRouter();
@@ -79,17 +18,9 @@ export default function AddPetScreen() {
 
   const availableRaces = type ? RACES_BY_TYPE[type] ?? [] : [];
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setPhoto(result.assets[0].uri);
-    }
+  const handlePickImage = async () => {
+    const uri = await pickPetImage();
+    if (uri) setPhoto(uri);
   };
 
   const handleSubmit = async () => {
@@ -184,6 +115,7 @@ export default function AddPetScreen() {
           />
         ))}
       </Menu>
+
       <TextInput
         label="Age"
         value={age}
@@ -194,7 +126,7 @@ export default function AddPetScreen() {
         keyboardType="numeric"
       />
 
-      <Button mode="outlined" onPress={pickImage} style={styles.input}>
+      <Button mode="outlined" onPress={handlePickImage} style={styles.input}>
         {photo ? "Change Photo" : "Pick a Photo"}
       </Button>
 

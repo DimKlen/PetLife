@@ -7,8 +7,7 @@ export async function getAllPets(): Promise<Pet[]> {
 }
 
 export async function getPetById(id: number): Promise<Pet | null> {
-  const db = await getDatabase();
-  return db.getFirstAsync<Pet>("SELECT * FROM pets WHERE id = ?", [id]);
+  return (await getDatabase()).getFirstAsync<Pet>("SELECT * FROM pets WHERE id = ?", [id]);
 }
 
 export async function createPet(pet: NewPet): Promise<void> {

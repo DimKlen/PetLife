@@ -1,12 +1,15 @@
 import React, { useCallback } from "react";
 import { View, FlatList, StyleSheet } from "react-native";
-import { FAB, Text } from "react-native-paper";
+import { Appbar, FAB, Text } from "react-native-paper";
 import { useRouter, useFocusEffect } from "expo-router";
-import { usePetStore } from "../store/petStore";
-import PetCard from "../components/PetCard";
+import { DrawerActions } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import { usePetStore } from "../../store/petStore";
+import PetCard from "../../components/PetCard";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { pets, loadPets } = usePetStore();
 
   useFocusEffect(
@@ -17,11 +20,20 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <Appbar.Header>
+        <Appbar.Action
+          icon="menu"
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          accessibilityLabel="Ouvrir le menu"
+        />
+        <Appbar.Content title="Mes Animaux" />
+      </Appbar.Header>
+
       {pets.length === 0 ? (
         <View style={styles.empty}>
-          <Text variant="headlineSmall">No pets yet!</Text>
+          <Text variant="headlineSmall">Aucun animal !</Text>
           <Text variant="bodyMedium" style={styles.emptyText}>
-            Tap the + button to add your first pet.
+            Appuie sur + pour ajouter ton premier animal.
           </Text>
         </View>
       ) : (
@@ -31,16 +43,18 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <PetCard
               pet={item}
-              onPress={() => router.push(`/pet/${item.id}`)}
+              onPress={() => router.push(`/pet-hub/${item.id}` as never)}
             />
           )}
           contentContainerStyle={styles.list}
         />
       )}
+
       <FAB
         icon="plus"
         style={styles.fab}
         onPress={() => router.push("/add-pet")}
+        accessibilityLabel="Ajouter un animal"
       />
     </View>
   );

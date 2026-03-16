@@ -50,15 +50,18 @@ name TEXT NOT NULL, type TEXT NOT NULL, race TEXT, age INTEGER, photo TEXT
 hunger INTEGER (0-100, défaut 100)
 thirst INTEGER (0-100, défaut 100)
 mood INTEGER (0-100, défaut 100)
+energy INTEGER (0-100, défaut 100)
+hygiene INTEGER (0-100, défaut 100)
 last_update INTEGER (timestamp ms)
 created_at INTEGER (timestamp ms)
 ```
 
 ## Algorithme Tamagotchi
 
-- Dégradation par heure : hunger −5, thirst −7, mood −3
-- Actions : feed → hunger +30, water → thirst +30, play → mood +30
+- Dégradation par heure : hunger −5, thirst −7, mood −3, energy −2, hygiene −1
+- Actions : feed → hunger +30 / energy −5 | water → thirst +35 | play → mood +25 / energy −15 / hunger −10 | clean → hygiene +40 / mood −5
 - Stats TOUJOURS clampées entre 0 et 100
+- overallHealth = moyenne des 5 stats (hunger + thirst + mood + energy + hygiene) / 5
 - Dégradation calculée au chargement du pet (delta = now − last_update), PAS en continu
 - Après calcul, last_update est mis à jour à now
 
@@ -67,6 +70,7 @@ created_at INTEGER (timestamp ms)
 - `/` → liste des pets (index.tsx)
 - `/add-pet` → formulaire création (add-pet.tsx)
 - `/pet/[id]` → hub santé du pet (pet/[id].tsx)
+- `/edit-pet/[id]` → formulaire modification du pet (edit-pet/[id].tsx)
 
 ## Conventions de code
 
@@ -94,6 +98,11 @@ created_at INTEGER (timestamp ms)
 3. **Les photos sont des URIs locales** → elles ne survivent pas à une réinstallation
 4. **localStorage web limité à ~5MB** → suffisant pour le MVP, pas pour la prod
 5. **useFocusEffect** nécessaire pour rafraîchir la liste quand on revient sur l'écran d'accueil
+6. **jest-expo doit correspondre au SDK Expo** → `jest-expo@54` pour `expo@54`, sinon erreur d'import runtime
+7. **jest@29 requis avec jest-expo@54** → `jest@30` est incompatible, utiliser `jest@29`
+8. **react-test-renderer doit être épinglé** → même version exacte que `react` (ex: `19.1.0`)
+9. **Menu de react-native-paper non testable directement** → utilise un Portal non capturé par le test renderer. Mocker avec `jest.mock` + `Object.assign` pour préserver `Menu.Item`. Wrapper les tests avec `<SafeAreaProvider>` et `<PaperProvider>`
+10. **gh CLI non trouvé dans bash** → ajouter `export PATH="$PATH:/c/Program Files/GitHub CLI"` avant d'utiliser `gh`
 
 ## Roadmap MVP
 

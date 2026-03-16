@@ -36,10 +36,11 @@ export function applyAction(
       result.hunger = clamp(result.hunger + 30, 0, 100);
       break;
     case "water":
-      result.thirst = clamp(result.thirst + 30, 0, 100);
+      result.thirst = clamp(result.thirst + 35, 0, 100);
       break;
     case "play":
-      result.mood = clamp(result.mood + 30, 0, 100);
+      result.mood = clamp(result.mood + 25, 0, 100);
+      result.hunger = clamp(result.hunger - 10, 0, 100);
       break;
   }
 
