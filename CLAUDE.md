@@ -43,33 +43,31 @@ Fichiers concernés : `database/db.ts` et `database/petRepository.ts`.
 
 ## Base de données
 
-Table unique `pets` :
+Table `pets` :
 ```
 id INTEGER PRIMARY KEY AUTOINCREMENT
 name TEXT NOT NULL, type TEXT NOT NULL, race TEXT, age INTEGER, photo TEXT
 hunger INTEGER (0-100, défaut 100)
 thirst INTEGER (0-100, défaut 100)
 mood INTEGER (0-100, défaut 100)
-energy INTEGER (0-100, défaut 100)
-hygiene INTEGER (0-100, défaut 100)
 last_update INTEGER (timestamp ms)
 created_at INTEGER (timestamp ms)
 ```
 
 ## Algorithme Tamagotchi
 
-- Dégradation par heure : hunger −5, thirst −7, mood −3, energy −2, hygiene −1
-- Actions : feed → hunger +30 / energy −5 | water → thirst +35 | play → mood +25 / energy −15 / hunger −10 | clean → hygiene +40 / mood −5
+- Dégradation par heure : hunger −5, thirst −7, mood −3
+- Actions : feed → hunger +30 | water → thirst +35 | play → mood +25 / hunger −10
 - Stats TOUJOURS clampées entre 0 et 100
-- overallHealth = moyenne des 5 stats (hunger + thirst + mood + energy + hygiene) / 5
+- overallHealth = (hunger + thirst + mood) / 3
 - Dégradation calculée au chargement du pet (delta = now − last_update), PAS en continu
 - Après calcul, last_update est mis à jour à now
 
 ## Routes
 
-- `/` → liste des pets (index.tsx)
+- `/` → liste des pets via drawer (app/(drawer)/index.tsx)
 - `/add-pet` → formulaire création (add-pet.tsx)
-- `/pet/[id]` → hub santé du pet (pet/[id].tsx)
+- `/pet-hub/[id]` → hub santé du pet (pet-hub/[id].tsx)
 - `/edit-pet/[id]` → formulaire modification du pet (edit-pet/[id].tsx)
 
 ## Conventions de code
@@ -103,6 +101,11 @@ created_at INTEGER (timestamp ms)
 8. **react-test-renderer doit être épinglé** → même version exacte que `react` (ex: `19.1.0`)
 9. **Menu de react-native-paper non testable directement** → utilise un Portal non capturé par le test renderer. Mocker avec `jest.mock` + `Object.assign` pour préserver `Menu.Item`. Wrapper les tests avec `<SafeAreaProvider>` et `<PaperProvider>`
 10. **gh CLI non trouvé dans bash** → ajouter `export PATH="$PATH:/c/Program Files/GitHub CLI"` avant d'utiliser `gh`
+11. **DateTimePicker ne s'affiche pas dans un Portal Paper** → utiliser `Modal as RNModal` (React Native natif) pour envelopper le DateTimePicker, hors du Portal
+12. **`branches: ['*']` en GitHub Actions ne matche pas `feature/xxx`** → utiliser `['**']` pour inclure les branches avec slash
+13. **Ne pas avoir `app/index.tsx` et `app/(drawer)/index.tsx` simultanément** → conflit de route, Expo Router prend le fichier racine et casse le drawer
+14. **Après "Update branch" GitHub sur une PR** → toujours relancer `npm install` et committer le `package-lock.json` si des dépendances diffèrent entre les branches
+15. **Touchables imbriqués** → ne pas imbriquer `TouchableOpacity` dans `TouchableOpacity`. Utiliser `Card onPress` (Paper) + `Pressable` (RN) pour les boutons internes d'une card cliquable
 
 ## Roadmap MVP
 
