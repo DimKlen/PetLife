@@ -18,8 +18,6 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       hunger INTEGER DEFAULT 100,
       thirst INTEGER DEFAULT 100,
       mood INTEGER DEFAULT 100,
-      energy INTEGER DEFAULT 100,
-      hygiene INTEGER DEFAULT 100,
       last_update INTEGER,
       created_at INTEGER
     );
@@ -42,10 +40,6 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
     CREATE INDEX IF NOT EXISTS idx_events_petId ON events(petId);
   `);
-
-  // Migrations colonnes pets
-  try { await db.execAsync("ALTER TABLE pets ADD COLUMN energy INTEGER DEFAULT 100"); } catch {}
-  try { await db.execAsync("ALTER TABLE pets ADD COLUMN hygiene INTEGER DEFAULT 100"); } catch {}
 
   // Migrations colonnes events (v2 : nouveaux champs)
   try { await db.execAsync("ALTER TABLE events ADD COLUMN allDay INTEGER DEFAULT 0"); } catch {}

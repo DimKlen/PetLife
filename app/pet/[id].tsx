@@ -12,14 +12,12 @@ const STATS_CONFIG = [
   { key: "hunger" as const, emoji: "🍖", label: "Nourriture", gradient: ["#f093fb", "#f5576c"] as [string, string] },
   { key: "thirst" as const, emoji: "💧", label: "Hydratation", gradient: ["#4facfe", "#00f2fe"] as [string, string] },
   { key: "mood" as const, emoji: "😊", label: "Humeur", gradient: ["#43e97b", "#38f9d7"] as [string, string] },
-  { key: "energy" as const, emoji: "⚡", label: "Énergie", gradient: ["#fa709a", "#fee140"] as [string, string] },
-  { key: "hygiene" as const, emoji: "🛁", label: "Hygiène", gradient: ["#30cfd0", "#667eea"] as [string, string] },
 ];
 
 export default function PetHubScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { selectedPet, overallHealth, loadPet, feed, giveWater, play, clean } = usePetStore();
+  const { selectedPet, overallHealth, loadPet, feed, giveWater, play } = usePetStore();
 
   useFocusEffect(
     useCallback(() => {
@@ -40,8 +38,6 @@ export default function PetHubScreen() {
     if (selectedPet.mood > 70) badges.push({ emoji: "😊", label: "Joyeux", bg: "#c6f6d5" });
     if (selectedPet.hunger < 40) badges.push({ emoji: "🍖", label: "A faim", bg: "#fed7d7" });
     if (selectedPet.thirst < 40) badges.push({ emoji: "💧", label: "A soif", bg: "#bee3f8" });
-    if (selectedPet.energy < 30) badges.push({ emoji: "😴", label: "Fatigué", bg: "#fef9c3" });
-    if (selectedPet.hygiene < 40) badges.push({ emoji: "🛁", label: "Sale", bg: "#ede9fe" });
     if (badges.length === 0) badges.push({ emoji: "✨", label: "En forme", bg: "#c6f6d5" });
     return badges;
   };
@@ -52,12 +48,6 @@ export default function PetHubScreen() {
       title: selectedPet.hunger < 50 ? "Repas bientôt !" : "Prochain repas",
       subtitle: selectedPet.hunger < 50 ? "Ton animal a faim" : "Nourriture suffisante",
       color: "#f5576c",
-    },
-    {
-      icon: "shower" as const,
-      title: selectedPet.hygiene < 50 ? "Bain nécessaire !" : "Prochain bain",
-      subtitle: selectedPet.hygiene < 50 ? "Ton animal est sale" : "Hygiène correcte",
-      color: "#30cfd0",
     },
     {
       icon: "medical-bag" as const,
@@ -153,14 +143,7 @@ export default function PetHubScreen() {
             onPress={play}
             accessibilityLabel="Jouer avec le pet"
           />
-          <GradientButton
-            label="Nettoyer"
-            icon="shower"
-            gradient={["#30cfd0", "#667eea"]}
-            onPress={clean}
-            accessibilityLabel="Nettoyer le pet"
-          />
-        </View>
+          </View>
 
         {/* Rappels */}
         <Text style={styles.sectionTitle}>Rappels</Text>

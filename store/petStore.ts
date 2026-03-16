@@ -12,7 +12,7 @@ import {
 } from "../database/eventRepository";
 
 function computeOverallHealth(pet: Pet): number {
-  return Math.round((pet.hunger + pet.thirst + pet.mood + pet.energy + pet.hygiene) / 5);
+  return Math.round((pet.hunger + pet.thirst + pet.mood) / 3);
 }
 
 interface PetStore {
@@ -25,7 +25,6 @@ interface PetStore {
   feed: () => Promise<void>;
   giveWater: () => Promise<void>;
   play: () => Promise<void>;
-  clean: () => Promise<void>;
 
   // --- Calendrier ---
   events: CalendarEvent[];
@@ -61,7 +60,7 @@ export const usePetStore = create<PetStore>((set, get) => ({
     const degraded = applyTimeDegradation(pet);
     const now = Date.now();
 
-    await updatePetStats(id, degraded.hunger, degraded.thirst, degraded.mood, degraded.energy, degraded.hygiene, now);
+    await updatePetStats(id, degraded.hunger, degraded.thirst, degraded.mood, now);
 
     const updated: Pet = { ...pet, ...degraded, last_update: now };
     set({ selectedPet: updated, overallHealth: computeOverallHealth(updated) });
@@ -70,9 +69,9 @@ export const usePetStore = create<PetStore>((set, get) => ({
   feed: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "feed");
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood }, "feed");
     const now = Date.now();
-    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, now);
     const next = { ...selectedPet, ...updated, last_update: now };
     set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
   },
@@ -80,9 +79,9 @@ export const usePetStore = create<PetStore>((set, get) => ({
   giveWater: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "water");
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood }, "water");
     const now = Date.now();
-    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, now);
     const next = { ...selectedPet, ...updated, last_update: now };
     set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
   },
@@ -90,19 +89,9 @@ export const usePetStore = create<PetStore>((set, get) => ({
   play: async () => {
     const { selectedPet } = get();
     if (!selectedPet) return;
-    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "play");
+    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood }, "play");
     const now = Date.now();
-    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
-    const next = { ...selectedPet, ...updated, last_update: now };
-    set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
-  },
-
-  clean: async () => {
-    const { selectedPet } = get();
-    if (!selectedPet) return;
-    const updated = applyAction({ hunger: selectedPet.hunger, thirst: selectedPet.thirst, mood: selectedPet.mood, energy: selectedPet.energy, hygiene: selectedPet.hygiene }, "clean");
-    const now = Date.now();
-    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, updated.energy, updated.hygiene, now);
+    await updatePetStats(selectedPet.id, updated.hunger, updated.thirst, updated.mood, now);
     const next = { ...selectedPet, ...updated, last_update: now };
     set({ selectedPet: next, overallHealth: computeOverallHealth(next) });
   },

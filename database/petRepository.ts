@@ -14,8 +14,8 @@ export async function createPet(pet: NewPet): Promise<void> {
   const db = await getDatabase();
   const now = Date.now();
   await db.runAsync(
-    `INSERT INTO pets (name, type, race, age, photo, hunger, thirst, mood, energy, hygiene, last_update, created_at)
-     VALUES (?, ?, ?, ?, ?, 100, 100, 100, 100, 100, ?, ?)`,
+    `INSERT INTO pets (name, type, race, age, photo, hunger, thirst, mood, last_update, created_at)
+     VALUES (?, ?, ?, ?, ?, 100, 100, 100, ?, ?)`,
     [pet.name, pet.type, pet.race ?? null, pet.age ?? null, pet.photo ?? null, now, now]
   );
 }
@@ -36,13 +36,11 @@ export async function updatePetStats(
   hunger: number,
   thirst: number,
   mood: number,
-  energy: number,
-  hygiene: number,
   lastUpdate: number
 ): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "UPDATE pets SET hunger = ?, thirst = ?, mood = ?, energy = ?, hygiene = ?, last_update = ? WHERE id = ?",
-    [hunger, thirst, mood, energy, hygiene, lastUpdate, id]
+    "UPDATE pets SET hunger = ?, thirst = ?, mood = ?, last_update = ? WHERE id = ?",
+    [hunger, thirst, mood, lastUpdate, id]
   );
 }

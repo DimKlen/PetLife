@@ -8,8 +8,6 @@ export interface Pet {
   hunger: number;
   thirst: number;
   mood: number;
-  energy: number;
-  hygiene: number;
   last_update: number;
   created_at: number;
 }
