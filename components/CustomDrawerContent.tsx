@@ -22,7 +22,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const goToPet = (petId: number) => {
     navigation.closeDrawer();
     // Petit délai pour laisser le drawer se fermer avant la navigation Stack
-    setTimeout(() => router.push(`/pet/${petId}` as never), 200);
+    setTimeout(() => router.push(`/pet-hub/${petId}` as never), 200);
   };
 
   return (

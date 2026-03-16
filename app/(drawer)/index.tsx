@@ -43,7 +43,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <PetCard
               pet={item}
-              onPress={() => router.push(`/pet/${item.id}`)}
+              onPress={() => router.push(`/pet-hub/${item.id}` as never)}
             />
           )}
           contentContainerStyle={styles.list}
