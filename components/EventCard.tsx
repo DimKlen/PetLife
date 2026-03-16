@@ -98,19 +98,16 @@ export function EventCard({ event, onEdit }: Props) {
         </View>
 
         {/* Actions */}
-        <View onStartShouldSetResponder={() => true}>
-          <TouchableOpacity
-            onPress={handleDelete}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.deleteBtn}
-            accessibilityLabel="Supprimer l'événement"
-          >
-            <MaterialCommunityIcons name="trash-can-outline" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </View>
+        <Pressable
+          onPress={handleDelete}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.deleteBtn}
+          accessibilityLabel="Supprimer l'événement"
+        >
+          <MaterialCommunityIcons name="trash-can-outline" size={20} color="#ccc" />
+        </Pressable>
       </Card.Content>
     </Card>
-    </TouchableOpacity>
   );
 }
 
