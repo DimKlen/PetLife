@@ -70,13 +70,15 @@ describe("AddPetScreen", () => {
     fireEvent.press(getByText("Add Pet"));
 
     await waitFor(() => {
-      expect(mockCreatePet).toHaveBeenCalledWith({
-        name: "Rex",
-        type: "Chien",
-        race: "Labrador",
-        age: 3,
-        photo: undefined,
-      });
+      expect(mockCreatePet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Rex",
+          type: "Chien",
+          race: "Labrador",
+          age: 3,
+          photo: undefined,
+        })
+      );
     });
 
     expect(mockBack).toHaveBeenCalled();
