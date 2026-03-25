@@ -21,6 +21,23 @@ export async function createPet(pet: NewPet): Promise<void> {
     age: pet.age ?? null,
     photo: pet.photo ?? null,
     color: pet.color ?? null,
+    sexe: pet.sexe ?? null,
+    date_naissance: pet.date_naissance ?? null,
+    couleur_pelage: pet.couleur_pelage ?? null,
+    apparence: pet.apparence ?? null,
+    poids: pet.poids ?? null,
+    sterilise: pet.sterilise ?? false,
+    vaccins: pet.vaccins ?? [],
+    allergies: pet.allergies ?? [],
+    maladies: pet.maladies ?? [],
+    traitements: pet.traitements ?? null,
+    proprio_nom: pet.proprio_nom ?? null,
+    proprio_tel: pet.proprio_tel ?? null,
+    proprio_email: pet.proprio_email ?? null,
+    proprio_adresse: pet.proprio_adresse ?? null,
+    vet_nom: pet.vet_nom ?? null,
+    vet_adresse: pet.vet_adresse ?? null,
+    vet_tel: pet.vet_tel ?? null,
     hunger: 100,
     thirst: 100,
     mood: 100,
@@ -31,10 +48,7 @@ export async function createPet(pet: NewPet): Promise<void> {
   webDb.savePets(pets);
 }
 
-export async function updatePetInfo(
-  id: number,
-  pet: Omit<NewPet, "name"> & { name: string }
-): Promise<void> {
+export async function updatePetInfo(id: number, pet: NewPet & { name: string }): Promise<void> {
   const pets = webDb.loadPets();
   const index = pets.findIndex((p) => p.id === id);
   if (index === -1) return;
@@ -46,6 +60,23 @@ export async function updatePetInfo(
     age: pet.age ?? null,
     photo: pet.photo ?? null,
     color: pet.color ?? null,
+    sexe: pet.sexe ?? null,
+    date_naissance: pet.date_naissance ?? null,
+    couleur_pelage: pet.couleur_pelage ?? null,
+    apparence: pet.apparence ?? null,
+    poids: pet.poids ?? null,
+    sterilise: pet.sterilise ?? false,
+    vaccins: pet.vaccins ?? [],
+    allergies: pet.allergies ?? [],
+    maladies: pet.maladies ?? [],
+    traitements: pet.traitements ?? null,
+    proprio_nom: pet.proprio_nom ?? null,
+    proprio_tel: pet.proprio_tel ?? null,
+    proprio_email: pet.proprio_email ?? null,
+    proprio_adresse: pet.proprio_adresse ?? null,
+    vet_nom: pet.vet_nom ?? null,
+    vet_adresse: pet.vet_adresse ?? null,
+    vet_tel: pet.vet_tel ?? null,
   };
   webDb.savePets(pets);
 }

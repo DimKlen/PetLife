@@ -41,8 +41,25 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     CREATE INDEX IF NOT EXISTS idx_events_petId ON events(petId);
   `);
 
-  // Migration colonne pets
+  // Migrations colonnes pets
   try { await db.execAsync("ALTER TABLE pets ADD COLUMN color TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN sexe TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN date_naissance TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN couleur_pelage TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN apparence TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN poids REAL"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN sterilise INTEGER DEFAULT 0"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN vaccins TEXT DEFAULT '[]'"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN allergies TEXT DEFAULT '[]'"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN maladies TEXT DEFAULT '[]'"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN traitements TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN proprio_nom TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN proprio_tel TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN proprio_email TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN proprio_adresse TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN vet_nom TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN vet_adresse TEXT"); } catch {}
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN vet_tel TEXT"); } catch {}
 
   // Migrations colonnes events (v2 : nouveaux champs)
   try { await db.execAsync("ALTER TABLE events ADD COLUMN allDay INTEGER DEFAULT 0"); } catch {}

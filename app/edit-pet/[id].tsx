@@ -1,159 +1,101 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
-import { TextInput, Button, Menu, Text } from "react-native-paper";
+import { ScrollView, StyleSheet } from "react-native";
+import { Button } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { getPetById, updatePetInfo } from "../../database/petRepository";
-import { RACES_BY_TYPE, PET_TYPES } from "../../constants/petTypes";
-import { pickPetImage } from "../../utils/imagePicker";
-import { ColorPicker } from "../../components/ColorPicker";
+import {
+  PetForm,
+  PetFormValues,
+  defaultPetFormValues,
+  toStorageDate,
+  fromStorageDate,
+} from "../../components/PetForm";
 import { DEFAULT_PET_COLOR } from "../../constants/petColors";
 
 export default function EditPetScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-
-  const [name, setName] = useState("");
-  const [type, setType] = useState("");
-  const [race, setRace] = useState("");
-  const [age, setAge] = useState("");
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [color, setColor] = useState(DEFAULT_PET_COLOR);
-  const [typeMenuVisible, setTypeMenuVisible] = useState(false);
-  const [raceMenuVisible, setRaceMenuVisible] = useState(false);
+  const [form, setForm] = useState<PetFormValues>(defaultPetFormValues);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     getPetById(Number(id)).then((pet) => {
       if (!pet) return;
-      setName(pet.name);
-      setType(pet.type);
-      setRace(pet.race ?? "");
-      setAge(pet.age != null ? String(pet.age) : "");
-      setPhoto(pet.photo ?? null);
-      setColor(pet.color ?? DEFAULT_PET_COLOR);
+      setForm({
+        name: pet.name,
+        type: pet.type,
+        race: pet.race ?? "",
+        age: pet.age != null ? String(pet.age) : "",
+        photo: pet.photo ?? null,
+        color: pet.color ?? DEFAULT_PET_COLOR,
+        sexe: pet.sexe ?? "",
+        dateNaissance: fromStorageDate(pet.date_naissance),
+        couleurPelage: pet.couleur_pelage ?? "",
+        apparence: pet.apparence ?? "",
+        poids: pet.poids != null ? String(pet.poids) : "",
+        sterilise: pet.sterilise ?? false,
+        vaccins: pet.vaccins ?? [],
+        allergies: pet.allergies ?? [],
+        maladies: pet.maladies ?? [],
+        traitements: pet.traitements ?? "",
+        proprioNom: pet.proprio_nom ?? "",
+        proprioTel: pet.proprio_tel ?? "",
+        proprioEmail: pet.proprio_email ?? "",
+        proprioAdresse: pet.proprio_adresse ?? "",
+        vetNom: pet.vet_nom ?? "",
+        vetAdresse: pet.vet_adresse ?? "",
+        vetTel: pet.vet_tel ?? "",
+      });
       setLoaded(true);
     });
   }, [id]);
 
-  const availableRaces = type ? RACES_BY_TYPE[type] ?? [] : [];
-
-  const handlePickImage = async () => {
-    const uri = await pickPetImage();
-    if (uri) setPhoto(uri);
+  const handleChange = (field: keyof PetFormValues, value: unknown) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!name.trim() || !type.trim()) {
-      Alert.alert("Error", "Name and type are required.");
-      return;
-    }
-
     await updatePetInfo(Number(id), {
-      name: name.trim(),
-      type: type.trim(),
-      race: race.trim() || undefined,
-      age: age ? parseInt(age, 10) : undefined,
-      photo: photo ?? undefined,
-      color,
+      name: form.name.trim(),
+      type: form.type.trim(),
+      race: form.race.trim() || undefined,
+      age: form.age ? parseInt(form.age, 10) : undefined,
+      photo: form.photo ?? undefined,
+      color: form.color,
+      sexe: form.sexe || undefined,
+      date_naissance: toStorageDate(form.dateNaissance) ?? undefined,
+      couleur_pelage: form.couleurPelage || undefined,
+      apparence: form.apparence || undefined,
+      poids: form.poids ? parseFloat(form.poids) : undefined,
+      sterilise: form.sterilise,
+      vaccins: form.vaccins,
+      allergies: form.allergies,
+      maladies: form.maladies,
+      traitements: form.traitements.trim() || undefined,
+      proprio_nom: form.proprioNom.trim() || undefined,
+      proprio_tel: form.proprioTel.trim() || undefined,
+      proprio_email: form.proprioEmail.trim() || undefined,
+      proprio_adresse: form.proprioAdresse.trim() || undefined,
+      vet_nom: form.vetNom.trim() || undefined,
+      vet_adresse: form.vetAdresse.trim() || undefined,
+      vet_tel: form.vetTel.trim() || undefined,
     });
 
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
   };
 
   if (!loaded) return null;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <TextInput
-        label="Name *"
-        value={name}
-        onChangeText={(text) => { if (/^[a-zA-ZÀ-ÿ\s]*$/.test(text)) setName(text); }}
-        mode="outlined"
-        style={styles.input}
-      />
-      <Menu
-        visible={typeMenuVisible}
-        onDismiss={() => setTypeMenuVisible(false)}
-        anchor={
-          <TextInput
-            label="Type *"
-            value={type}
-            mode="outlined"
-            style={styles.input}
-            editable={false}
-            right={<TextInput.Icon icon="chevron-down" onPress={() => setTypeMenuVisible(true)} />}
-            onPressIn={() => setTypeMenuVisible(true)}
-          />
-        }
-      >
-        {PET_TYPES.map((t) => (
-          <Menu.Item
-            key={t}
-            title={t.replace(/_/g, " ")}
-            onPress={() => {
-              setType(t);
-              setRace("");
-              setTypeMenuVisible(false);
-            }}
-          />
-        ))}
-      </Menu>
-
-      <Menu
-        visible={raceMenuVisible}
-        onDismiss={() => setRaceMenuVisible(false)}
-        anchor={
-          <TextInput
-            label="Race"
-            value={race}
-            mode="outlined"
-            style={styles.input}
-            editable={false}
-            disabled={availableRaces.length === 0}
-            right={<TextInput.Icon icon="chevron-down" onPress={() => setRaceMenuVisible(true)} />}
-            onPressIn={() => availableRaces.length > 0 && setRaceMenuVisible(true)}
-          />
-        }
-      >
-        {availableRaces.map((r) => (
-          <Menu.Item
-            key={r}
-            title={r}
-            onPress={() => {
-              setRace(r);
-              setRaceMenuVisible(false);
-            }}
-          />
-        ))}
-      </Menu>
-
-      <TextInput
-        label="Age"
-        value={age}
-        onChangeText={(text) => { if (/^\d*$/.test(text)) setAge(text); }}
-        mode="outlined"
-        style={styles.input}
-        keyboardType="numeric"
-      />
-
-      <Button mode="outlined" onPress={handlePickImage} style={styles.input}>
-        {photo ? "Change Photo" : "Pick a Photo"}
-      </Button>
-
-      {photo && <Image source={{ uri: photo }} style={styles.preview} />}
-
-      <View style={styles.colorSection}>
-        <Text style={styles.colorLabel}>Couleur</Text>
-        <View style={styles.colorPreviewRow}>
-          <View style={[styles.colorDot, { backgroundColor: color }]} />
-          <Text style={styles.colorHex}>{color}</Text>
-        </View>
-        <ColorPicker value={color} onChange={setColor} />
-      </View>
-
+      <PetForm values={form} onChange={handleChange} />
       <Button mode="contained" onPress={handleSubmit} style={styles.submit}>
-        Save Changes
+        Enregistrer
       </Button>
     </ScrollView>
   );
@@ -162,40 +104,7 @@ export default function EditPetScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-  },
-  input: {
-    marginBottom: 12,
-  },
-  preview: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  colorSection: {
-    marginBottom: 12,
-  },
-  colorLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-  },
-  colorPreviewRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  colorDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  colorHex: {
-    fontSize: 13,
-    color: "#555",
-    fontFamily: "monospace",
+    paddingBottom: 32,
   },
   submit: {
     marginTop: 8,

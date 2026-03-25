@@ -8,6 +8,13 @@ import { StatCard } from "../../components/StatCard";
 import { GradientButton } from "../../components/GradientButton";
 import { ReminderCard } from "../../components/ReminderCard";
 
+function darkenHex(hex: string, amount = 50): string {
+  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
+  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
+  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
 const STATS_CONFIG = [
   { key: "hunger" as const, emoji: "🍖", label: "Nourriture", gradient: ["#f093fb", "#f5576c"] as [string, string] },
   { key: "thirst" as const, emoji: "💧", label: "Hydratation", gradient: ["#4facfe", "#00f2fe"] as [string, string] },
@@ -60,7 +67,12 @@ export default function PetHubScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       {/* Header gradient */}
-      <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
+      <LinearGradient
+        colors={selectedPet.color
+          ? [selectedPet.color, darkenHex(selectedPet.color)]
+          : ["#667eea", "#764ba2"]}
+        style={styles.header}
+      >
         <View style={styles.headerNav}>
           <IconButton
             icon="arrow-left"
@@ -85,7 +97,7 @@ export default function PetHubScreen() {
           />
         ) : (
           <Image
-            source={require("../../assets/images/icon.png")}
+            source={require("../../assets/images/logo-petlife.png")}
             style={[styles.photo, selectedPet.color ? { borderColor: selectedPet.color } : null]}
           />
         )}

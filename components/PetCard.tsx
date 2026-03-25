@@ -14,14 +14,10 @@ export default function PetCard({ pet, onPress }: PetCardProps) {
   return (
     <Card style={styles.card} onPress={onPress}>
       <Card.Content style={styles.content}>
-        {pet.photo ? (
-          <Image source={{ uri: pet.photo }} style={styles.photo} />
-        ) : (
-          <Image
-            source={require("../assets/images/icon.png")}
-            style={styles.photo}
-          />
-        )}
+        <Image
+          source={pet.photo ? { uri: pet.photo } : require("../assets/images/logo-petlife.png")}
+          style={[styles.photo, pet.color ? { borderWidth: 3, borderColor: pet.color } : null]}
+        />
         <Text variant="titleMedium" style={styles.name}>
           {pet.name}
         </Text>
