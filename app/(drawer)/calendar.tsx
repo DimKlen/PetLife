@@ -8,7 +8,6 @@ import {
   Platform,
   UIManager,
   Dimensions,
-  Image,
 } from "react-native";
 import { Appbar, FAB, Text } from "react-native-paper";
 import { DrawerActions } from "@react-navigation/native";
@@ -83,10 +82,11 @@ export default function CalendarScreen() {
     pets,
     events,
     selectedDate,
-    filterPetId,
+    filterPetIds,
     loadEvents,
     setSelectedDate,
-    setFilterPetId,
+    toggleFilterPetId,
+    clearFilterPetIds,
     getEventsByDate,
   } = usePetStore();
 
@@ -107,16 +107,39 @@ export default function CalendarScreen() {
   const dayEvents = getEventsByDate(selectedDate);
   const DAY_W = (SCREEN_WIDTH - 32) / 7;
 
-  // Jours de la semaine qui ont des events (dots sur le week strip)
-  const daysWithEvents = new Set(
-    weekDays.filter((day) =>
-      events.some(
-        (e) =>
-          eventOccursOnDate(e, day) &&
-          (filterPetId === null || e.petIds.length === 0 || e.petIds.includes(filterPetId))
-      )
-    )
-  );
+  // Couleurs des points pour chaque jour de la semaine (week strip)
+  function getDotsForDay(day: string): string[] {
+    const petIdsSeen = new Set<number | "all">();
+    const colors: string[] = [];
+
+    for (const e of events) {
+      if (!eventOccursOnDate(e, day)) continue;
+      if (
+        filterPetIds.length > 0 &&
+        e.petIds.length > 0 &&
+        !e.petIds.some((id) => filterPetIds.includes(id))
+      ) continue;
+
+      if (e.petIds.length === 0) {
+        if (!petIdsSeen.has("all")) {
+          petIdsSeen.add("all");
+          colors.push("#667eea");
+        }
+      } else {
+        for (const petId of e.petIds) {
+          if (filterPetIds.length > 0 && !filterPetIds.includes(petId)) continue;
+          if (!petIdsSeen.has(petId)) {
+            petIdsSeen.add(petId);
+            const pet = pets.find((p) => p.id === petId);
+            colors.push(pet?.color ?? "#667eea");
+          }
+        }
+      }
+
+    }
+
+    return colors;
+  }
 
   // MarkedDates pour le Calendar complet (mois visible = mois de selectedDate)
   const getMarkedDates = () => {
@@ -135,7 +158,7 @@ export default function CalendarScreen() {
     );
 
     events.forEach((e) => {
-      if (filterPetId !== null && e.petIds.length > 0 && !e.petIds.includes(filterPetId)) return;
+      if (filterPetIds.length > 0 && e.petIds.length > 0 && !e.petIds.some((id) => filterPetIds.includes(id))) return;
       const datesToMark = e.repeat === "never"
         ? [e.date]
         : monthDays.filter((d) => eventOccursOnDate(e, d));
@@ -196,7 +219,7 @@ export default function CalendarScreen() {
               const isSelected = day === selectedDate;
               const isToday = day === today;
               const dayNum = day.split("-")[2];
-              const hasEvent = daysWithEvents.has(day);
+              const dots = getDotsForDay(day);
 
               return (
                 <TouchableOpacity
@@ -221,7 +244,14 @@ export default function CalendarScreen() {
                       {dayNum}
                     </Text>
                   </View>
-                  <View style={[styles.eventDot, { opacity: hasEvent ? 1 : 0 }]} />
+                  <View style={styles.dotsRow}>
+                    {dots.slice(0, 2).map((color, di) => (
+                      <View key={di} style={[styles.eventDot, { backgroundColor: color }]} />
+                    ))}
+                    {dots.length > 2 && (
+                      <Text style={styles.dotsOverflow}>+{dots.length - 2}</Text>
+                    )}
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -269,26 +299,27 @@ export default function CalendarScreen() {
           contentContainerStyle={styles.filtersContent}
         >
           <TouchableOpacity
-            onPress={() => setFilterPetId(null)}
-            style={[styles.filterPill, filterPetId === null && styles.filterPillSelected]}
+            onPress={clearFilterPetIds}
+            style={[styles.filterPill, { backgroundColor: filterPetIds.length === 0 ? "#4c5fd5" : "#f0f0f0" }]}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterPillText, filterPetId === null && styles.filterPillTextSelected]}>
+            <Text style={[styles.filterPillText, filterPetIds.length === 0 && styles.filterPillTextSelected]}>
               🐾 Tous
             </Text>
           </TouchableOpacity>
           {pets.map((pet) => {
-            const selected = filterPetId === pet.id;
+            const selected = filterPetIds.includes(pet.id);
+            const petColor = pet.color ?? "#4c5fd5";
             return (
               <TouchableOpacity
                 key={pet.id}
-                onPress={() => setFilterPetId(pet.id)}
-                style={[styles.filterPill, selected && styles.filterPillSelected]}
+                onPress={() => toggleFilterPetId(pet.id)}
+                style={[
+                  styles.filterPill,
+                  { backgroundColor: selected ? petColor : "#f0f0f0" },
+                ]}
                 activeOpacity={0.7}
               >
-                {pet.photo && (
-                  <Image source={{ uri: pet.photo }} style={styles.filterPillAvatar} />
-                )}
                 <Text style={[styles.filterPillText, selected && styles.filterPillTextSelected]}>
                   {pet.name}
                 </Text>
@@ -435,11 +466,23 @@ const styles = StyleSheet.create({
     color: "#667eea",
     fontWeight: "700",
   },
+  dotsRow: {
+    flexDirection: "row",
+    gap: 3,
+    height: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   eventDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "#667eea",
+  },
+  dotsOverflow: {
+    fontSize: 8,
+    fontWeight: "700",
+    color: "#888",
+    lineHeight: 8,
   },
 
   // Toggle
@@ -472,17 +515,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   filterPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: "#f0f0f0",
+    borderWidth: 2,
+    borderColor: "white",
     marginRight: 6,
-  },
-  filterPillSelected: {
-    backgroundColor: "#4c5fd5",
   },
   filterPillText: {
     fontSize: 13,
@@ -492,11 +530,6 @@ const styles = StyleSheet.create({
   filterPillTextSelected: {
     color: "white",
     fontWeight: "700",
-  },
-  filterPillAvatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
   },
 
   // Events list

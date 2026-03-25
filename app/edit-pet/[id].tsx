@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView, Image, Alert } from "react-native";
-import { TextInput, Button, Menu } from "react-native-paper";
+import { TextInput, Button, Menu, Text } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { getPetById, updatePetInfo } from "../../database/petRepository";
 import { RACES_BY_TYPE, PET_TYPES } from "../../constants/petTypes";
 import { pickPetImage } from "../../utils/imagePicker";
+import { ColorPicker } from "../../components/ColorPicker";
+import { DEFAULT_PET_COLOR } from "../../constants/petColors";
 
 export default function EditPetScreen() {
   const router = useRouter();
@@ -15,6 +17,7 @@ export default function EditPetScreen() {
   const [race, setRace] = useState("");
   const [age, setAge] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [color, setColor] = useState(DEFAULT_PET_COLOR);
   const [typeMenuVisible, setTypeMenuVisible] = useState(false);
   const [raceMenuVisible, setRaceMenuVisible] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -28,6 +31,7 @@ export default function EditPetScreen() {
       setRace(pet.race ?? "");
       setAge(pet.age != null ? String(pet.age) : "");
       setPhoto(pet.photo ?? null);
+      setColor(pet.color ?? DEFAULT_PET_COLOR);
       setLoaded(true);
     });
   }, [id]);
@@ -51,6 +55,7 @@ export default function EditPetScreen() {
       race: race.trim() || undefined,
       age: age ? parseInt(age, 10) : undefined,
       photo: photo ?? undefined,
+      color,
     });
 
     router.back();
@@ -138,6 +143,15 @@ export default function EditPetScreen() {
 
       {photo && <Image source={{ uri: photo }} style={styles.preview} />}
 
+      <View style={styles.colorSection}>
+        <Text style={styles.colorLabel}>Couleur</Text>
+        <View style={styles.colorPreviewRow}>
+          <View style={[styles.colorDot, { backgroundColor: color }]} />
+          <Text style={styles.colorHex}>{color}</Text>
+        </View>
+        <ColorPicker value={color} onChange={setColor} />
+      </View>
+
       <Button mode="contained" onPress={handleSubmit} style={styles.submit}>
         Save Changes
       </Button>
@@ -158,6 +172,30 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignSelf: "center",
     marginBottom: 16,
+  },
+  colorSection: {
+    marginBottom: 12,
+  },
+  colorLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 8,
+  },
+  colorPreviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  colorDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  colorHex: {
+    fontSize: 13,
+    color: "#555",
+    fontFamily: "monospace",
   },
   submit: {
     marginTop: 8,

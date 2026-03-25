@@ -20,6 +20,7 @@ export async function createPet(pet: NewPet): Promise<void> {
     race: pet.race ?? null,
     age: pet.age ?? null,
     photo: pet.photo ?? null,
+    color: pet.color ?? null,
     hunger: 100,
     thirst: 100,
     mood: 100,
@@ -44,6 +45,7 @@ export async function updatePetInfo(
     race: pet.race ?? null,
     age: pet.age ?? null,
     photo: pet.photo ?? null,
+    color: pet.color ?? null,
   };
   webDb.savePets(pets);
 }

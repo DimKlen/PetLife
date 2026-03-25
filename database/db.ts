@@ -41,6 +41,9 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     CREATE INDEX IF NOT EXISTS idx_events_petId ON events(petId);
   `);
 
+  // Migration colonne pets
+  try { await db.execAsync("ALTER TABLE pets ADD COLUMN color TEXT"); } catch {}
+
   // Migrations colonnes events (v2 : nouveaux champs)
   try { await db.execAsync("ALTER TABLE events ADD COLUMN allDay INTEGER DEFAULT 0"); } catch {}
   try { await db.execAsync("ALTER TABLE events ADD COLUMN startTime TEXT"); } catch {}

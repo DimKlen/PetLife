@@ -29,14 +29,15 @@ interface PetStore {
   // --- Calendrier ---
   events: CalendarEvent[];
   selectedDate: string; // "YYYY-MM-DD"
-  filterPetId: number | null;
+  filterPetIds: number[];
   loadEvents: () => Promise<void>;
   addEvent: (data: Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   updateEvent: (id: string, data: Partial<Omit<CalendarEvent, "id" | "createdAt" | "updatedAt">>) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
   toggleEventComplete: (id: string) => Promise<void>;
   setSelectedDate: (date: string) => void;
-  setFilterPetId: (petId: number | null) => void;
+  toggleFilterPetId: (petId: number) => void;
+  clearFilterPetIds: () => void;
   getEventsByDate: (date: string) => CalendarEvent[];
   getUpcomingEvents: (limit?: number) => CalendarEvent[];
 }
@@ -100,7 +101,7 @@ export const usePetStore = create<PetStore>((set, get) => ({
 
   events: [],
   selectedDate: new Date().toISOString().split("T")[0],
-  filterPetId: null,
+  filterPetIds: [],
 
   loadEvents: async () => {
     const events = await getAllEvents();
@@ -146,28 +147,33 @@ export const usePetStore = create<PetStore>((set, get) => ({
 
   setSelectedDate: (date) => set({ selectedDate: date }),
 
-  setFilterPetId: (petId) => set({ filterPetId: petId }),
+  toggleFilterPetId: (petId) => set((s) => ({
+    filterPetIds: s.filterPetIds.includes(petId)
+      ? s.filterPetIds.filter((id) => id !== petId)
+      : [...s.filterPetIds, petId],
+  })),
+
+  clearFilterPetIds: () => set({ filterPetIds: [] }),
 
   getEventsByDate: (date) => {
-    const { events, filterPetId } = get();
+    const { events, filterPetIds } = get();
     return events.filter((e) => {
       if (!eventOccursOnDate(e, date)) return false;
-      if (filterPetId === null) return true;
-      return e.petIds.length === 0 || e.petIds.includes(filterPetId);
+      if (filterPetIds.length === 0) return true;
+      return e.petIds.length === 0 || e.petIds.some((id) => filterPetIds.includes(id));
     });
   },
 
   getUpcomingEvents: (limit = 5) => {
-    const { events, filterPetId } = get();
+    const { events, filterPetIds } = get();
     const today = new Date().toISOString().split("T")[0];
     return events
       .filter((e) => {
         if (e.completed) return false;
-        // un event récurrent a toujours des occurrences futures
         if (e.repeat !== "never") return e.date <= today || e.date > today;
         if (e.date < today) return false;
-        if (filterPetId === null) return true;
-        return e.petIds.length === 0 || e.petIds.includes(filterPetId);
+        if (filterPetIds.length === 0) return true;
+        return e.petIds.length === 0 || e.petIds.some((id) => filterPetIds.includes(id));
       })
       .slice(0, limit);
   },

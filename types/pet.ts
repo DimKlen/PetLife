@@ -5,6 +5,7 @@ export interface Pet {
   race: string | null;
   age: number | null;
   photo: string | null;
+  color: string | null;
   hunger: number;
   thirst: number;
   mood: number;
@@ -13,4 +14,4 @@ export interface Pet {
 }
 
 export type NewPet = Pick<Pet, "name" | "type"> &
-  Partial<Pick<Pet, "race" | "age" | "photo">>;
+  Partial<Pick<Pet, "race" | "age" | "photo" | "color">>;

@@ -79,12 +79,23 @@ export default function PetHubScreen() {
         </View>
 
         {selectedPet.photo ? (
-          <Image source={{ uri: selectedPet.photo }} style={styles.photo} />
+          <Image
+            source={{ uri: selectedPet.photo }}
+            style={[styles.photo, selectedPet.color ? { borderColor: selectedPet.color } : null]}
+          />
         ) : (
-          <Image source={require("../../assets/images/icon.png")} style={styles.photo} />
+          <Image
+            source={require("../../assets/images/icon.png")}
+            style={[styles.photo, selectedPet.color ? { borderColor: selectedPet.color } : null]}
+          />
         )}
 
-        <Text style={styles.petName}>{selectedPet.name}</Text>
+        <View style={styles.petNameRow}>
+          <Text style={styles.petName}>{selectedPet.name}</Text>
+          {selectedPet.color && (
+            <View style={[styles.colorBadge, { backgroundColor: selectedPet.color }]} />
+          )}
+        </View>
         <Text style={styles.petInfo}>
           {selectedPet.type}
           {selectedPet.race ? ` · ${selectedPet.race}` : ""}
@@ -193,10 +204,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     marginBottom: 10,
   },
+  petNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   petName: {
     fontSize: 24,
     fontWeight: "700",
     color: "white",
+  },
+  colorBadge: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.6)",
   },
   petInfo: {
     fontSize: 14,
