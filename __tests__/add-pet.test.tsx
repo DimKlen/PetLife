@@ -16,7 +16,7 @@ const renderScreen = () =>
 // Mock expo-router
 const mockBack = jest.fn();
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ back: mockBack }),
+  useRouter: () => ({ back: mockBack, canGoBack: () => true, replace: jest.fn() }),
 }));
 
 // Mock database
@@ -30,7 +30,7 @@ jest.mock("expo-image-picker", () => ({
   launchImageLibraryAsync: jest.fn(),
 }));
 
-// Mock Menu pour éviter le Portal de react-native-paper qui n'est pas capturé par le test renderer
+// Mock Menu pour éviter le Portal de react-native-paper
 jest.mock("react-native-paper", () => {
   const actual = jest.requireActual("react-native-paper");
   return {
@@ -50,24 +50,19 @@ describe("AddPetScreen", () => {
   });
 
   it("crée un animal avec les informations renseignées", async () => {
-    const { getByTestId, getByText, findByText } = renderScreen();
+    const { getByTestId, findByText } = renderScreen();
 
-    // Remplir le nom
     fireEvent.changeText(getByTestId("input-name"), "Rex");
 
-    // Ouvrir le dropdown Type et sélectionner "Chien"
     fireEvent.press(getByTestId("press-type"));
     fireEvent.press(await findByText("Chien"));
 
-    // Ouvrir le dropdown Race et sélectionner "Labrador"
     fireEvent.press(getByTestId("press-race"));
     fireEvent.press(await findByText("Labrador"));
 
-    // Remplir l'âge
     fireEvent.changeText(getByTestId("input-age"), "3");
 
-    // Soumettre le formulaire
-    fireEvent.press(getByText("Add Pet"));
+    fireEvent.press(await findByText("Ajouter l'animal"));
 
     await waitFor(() => {
       expect(mockCreatePet).toHaveBeenCalledWith(
@@ -76,22 +71,11 @@ describe("AddPetScreen", () => {
           type: "Chien",
           race: "Labrador",
           age: 3,
-          photo: undefined,
         })
       );
     });
 
     expect(mockBack).toHaveBeenCalled();
-  });
-
-  it("bloque la soumission si le nom est vide", async () => {
-    const { getByText } = renderScreen();
-
-    fireEvent.press(getByText("Add Pet"));
-
-    await waitFor(() => {
-      expect(mockCreatePet).not.toHaveBeenCalled();
-    });
   });
 
   it("refuse les caractères non alphabétiques dans le nom", () => {

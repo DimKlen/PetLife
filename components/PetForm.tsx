@@ -111,6 +111,8 @@ function SingleDropdown({
   setOpenMenu,
   onSelect,
   disabled,
+  pressTestID,
+  inputTestID,
 }: {
   label: string;
   value: string;
@@ -120,6 +122,8 @@ function SingleDropdown({
   setOpenMenu: (k: string | null) => void;
   onSelect: (v: string) => void;
   disabled?: boolean;
+  pressTestID?: string;
+  inputTestID?: string;
 }) {
   return (
     <Menu
@@ -127,10 +131,12 @@ function SingleDropdown({
       onDismiss={() => setOpenMenu(null)}
       anchor={
         <Pressable
+          testID={pressTestID}
           onPress={() => !disabled && setOpenMenu(menuKey)}
           disabled={disabled}
         >
           <TextInput
+            testID={inputTestID}
             label={label}
             value={value}
             mode="outlined"
@@ -184,6 +190,7 @@ export function PetForm({ values, onChange }: PetFormProps) {
       <SectionHeader title="Informations" />
 
       <TextInput
+        testID="input-name"
         label="Nom *"
         value={values.name}
         onChangeText={(t) => { if (/^[a-zA-ZÀ-ÿ\s]*$/.test(t)) onChange("name", t); }}
@@ -199,6 +206,8 @@ export function PetForm({ values, onChange }: PetFormProps) {
         openMenu={openMenu}
         setOpenMenu={setOpenMenu}
         onSelect={(v) => { onChange("type", v); onChange("race", ""); }}
+        pressTestID="press-type"
+        inputTestID="input-type"
       />
 
       <SingleDropdown
@@ -210,6 +219,8 @@ export function PetForm({ values, onChange }: PetFormProps) {
         setOpenMenu={setOpenMenu}
         onSelect={(v) => onChange("race", v)}
         disabled={availableRaces.length === 0}
+        pressTestID="press-race"
+        inputTestID="input-race"
       />
 
       <SingleDropdown
@@ -223,6 +234,7 @@ export function PetForm({ values, onChange }: PetFormProps) {
       />
 
       <TextInput
+        testID="input-age"
         label="Âge (années)"
         value={values.age}
         onChangeText={(t) => { if (/^\d*$/.test(t)) onChange("age", t); }}
