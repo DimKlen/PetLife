@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import {
   View,
   StyleSheet,
-  Image,
   Switch,
   Pressable,
 } from "react-native";
 import { TextInput, Menu, Text } from "react-native-paper";
 import { ColorPicker } from "./ColorPicker";
 import { TagSelector } from "./TagSelector";
-import { pickPetImage } from "../utils/imagePicker";
+import { PhotoPicker } from "./PhotoPicker";
 import { RACES_BY_TYPE, PET_TYPES } from "../constants/petTypes";
 import {
   SEXES,
@@ -168,11 +167,6 @@ export function PetForm({ values, onChange }: PetFormProps) {
 
   const availableRaces = values.type ? RACES_BY_TYPE[values.type] ?? [] : [];
 
-  const handlePickImage = async () => {
-    const uri = await pickPetImage();
-    if (uri) onChange("photo", uri);
-  };
-
   const handleDateChange = (text: string) => {
     const digits = text.replace(/\D/g, "");
     let formatted = digits;
@@ -279,23 +273,10 @@ export function PetForm({ values, onChange }: PetFormProps) {
         <ColorPicker value={values.color} onChange={(v) => onChange("color", v)} />
       </View>
 
-      <View style={styles.photoRow}>
-        <View style={styles.photoBtn}>
-          <TextInput
-            label={values.photo ? "Changer la photo" : "Ajouter une photo"}
-            value=""
-            mode="outlined"
-            editable={false}
-            right={<TextInput.Icon icon="camera" onPress={handlePickImage} />}
-            onPressIn={handlePickImage}
-            pointerEvents="box-none"
-            style={styles.input}
-          />
-        </View>
-        {values.photo && (
-          <Image source={{ uri: values.photo }} style={styles.photoPreview} />
-        )}
-      </View>
+      <PhotoPicker
+        photo={values.photo}
+        onChange={(uri) => onChange("photo", uri)}
+      />
 
       {/* ── Santé ── */}
       <SectionHeader title="Santé" />
@@ -445,20 +426,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginBottom: 8,
-  },
-  photoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 4,
-  },
-  photoBtn: {
-    flex: 1,
-  },
-  photoPreview: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
   },
   switchRow: {
     flexDirection: "row",
